@@ -1,70 +1,68 @@
-Vendor:         Microsoft Corporation
-Distribution:   Azure Linux
-%global fontname google-crosextra-caladea
-%global fontconf62 62-%{fontname}
-%global fontconf30 30-0-%{fontname}
-
 %global archivename crosextrafonts-20130214
 
-Name:           %{fontname}-fonts
 Version:        1.002
-Release:        1%{?dist}
-Summary:        Serif font metric-compatible with Cambria font
+Release:        0.19.20130214%{?dist}
+Epoch:          1
+URL:            http://code.google.com/p/chromium/issues/detail?id=168879
 
+%global foundry           Google Crosextra
 # License added in font as "otfinfo -i Caladea-Regular.ttf | grep License"
 # also from http://code.google.com/p/chromium/issues/detail?id=280557
-License:        ASL 2.0
-URL:            http://code.google.com/p/chromium/issues/detail?id=168879
-Source0:        http://gsdview.appspot.com/chromeos-localmirror/distfiles/%{archivename}.tar.gz
-Source1:        30-0-%{fontname}-fontconfig.conf
-Source2:        62-%{fontname}-fontconfig.conf
-Source3:        %{fontname}.metainfo.xml
+%global fontlicense       Apache-2.0
+%global fontlicenses      LICENSE-2.0.txt
 
-BuildArch:      noarch
-BuildRequires:  fontpackages-devel
-Requires:       fontpackages-filesystem
+%global fontfamily        Caladea
+%global fontsummary       Serif font metric-compatible with Cambria font
 
-%description
+%global fonts             *.ttf
+%global fontconfs         %{SOURCE1} %{SOURCE2}
+%global fontdescription   %{expand:
 Caladea is metric-compatible with Cambria font. This font is a serif
 typeface family based on Lato.
+}
+
+Source0:        http://gsdview.appspot.com/chromeos-localmirror/distfiles/%{archivename}.tar.gz
+Source1:        30-0-%{fontpkgname}.conf
+Source2:        62-%{fontpkgname}.conf
+Source3:        https://www.apache.org/licenses/LICENSE-2.0.txt
+
+%global fontpkgheader     %{expand:
+Obsoletes: ht-caladea-fonts < 1:1.001-10.20200428git336a529
+}
+
+%fontpkg
 
 %prep
-%setup -q -n %{archivename}
-
+%autosetup -n %{archivename}
+cp -p %{SOURCE3} .
 
 %build
-
+%fontbuild
 
 %install
-install -m 0755 -d %{buildroot}%{_fontdir}
-install -m 0644 -p *.ttf %{buildroot}%{_fontdir}
+%fontinstall
 
-install -m 0755 -d %{buildroot}%{_fontconfig_templatedir} \
-                   %{buildroot}%{_fontconfig_confdir}
+%check
+%fontcheck
 
-install -m 0644 -p %{SOURCE1} \
-        %{buildroot}%{_fontconfig_templatedir}/%{fontconf30}-fontconfig.conf
-install -m 0644 -p %{SOURCE2} \
-        %{buildroot}%{_fontconfig_templatedir}/%{fontconf62}-fontconfig.conf
-
-ln -s %{_fontconfig_templatedir}/%{fontconf30}-fontconfig.conf \
-      %{buildroot}%{_fontconfig_confdir}/%{fontconf30}-fontconfig.conf
-ln -s %{_fontconfig_templatedir}/%{fontconf62}-fontconfig.conf \
-      %{buildroot}%{_fontconfig_confdir}/%{fontconf62}-fontconfig.conf
-
-# Add AppStream metadata
-install -Dm 0644 -p %{SOURCE3} \
-        %{buildroot}%{_datadir}/appdata/%{fontname}.metainfo.xml
-
-%_font_pkg -f *-%{fontname}-fontconfig.conf *.ttf
-%doc
-%{_datadir}/appdata/%{fontname}.metainfo.xml
-
+%fontfiles
 
 %changelog
-* Thu Oct 14 2021 Pawel Winogrodzki <pawelwi@microsoft.com> - 1.002-1
-- Initial CBL-Mariner import from Fedora 32 (license: MIT).
-- Converting the 'Release' tag to the '[number].[distribution]' format.
+* Thu Jul 18 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.002-0.19.20130214
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
+
+* Wed Jan 24 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.002-0.18.20130214
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Sat Jan 20 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.002-0.17.20130214
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.002-0.16.20130214
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Mon Feb 06 2023 Parag Nemade <pnemade AT redhat DOT com> - 1:1.002-0.15.20130214
+- Un-retire this package in F38+ (#2162532)
+- Update as per suggestions given in rename package review (#2166813)
 
 * Wed Jan 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 1.002-0.14.20130214
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild

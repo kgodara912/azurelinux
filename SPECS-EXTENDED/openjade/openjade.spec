@@ -1,36 +1,49 @@
-Summary:        A DSSSL implementation
-Name:           openjade
-Version:        1.3.2
-Release:        64%{?dist}
-License:        DMIT
-Vendor:         Microsoft Corporation
-Distribution:   Azure Linux
-URL:            https://openjade.sourceforge.net/
-Source:         http://download.sourceforge.net/openjade/openjade-%{version}.tar.gz
-#config.sub and config.guess from upstream sources (Mar 25th 2013).
-#http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD
-#http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD
-#I can't get them from autoreconf, because of the very strange openjade structure of config files
-Source2:        config.guess
-Source3:        config.sub
-#fix build on ppc64
-Patch0:         openjade-ppc64.patch
-#do not link against -lnsl
-Patch1:         openjade-1.3.1-nsl.patch
-#Fix dependent libs for libogrove (bug #198232).
-Patch2:         openjade-deplibs.patch
-#do not require OpenSP libosp.la file for build(#485114)
-Patch3:         openjade-nola.patch
-#upstream bug tracker fix for build with gcc46
-Patch4:         openjade-1.3.2-gcc46.patch
-#use Getopt:Std to prevent build failure
-Patch5:         openjade-getoptperl.patch
-BuildRequires:  gcc-c++
-BuildRequires:  opensp-devel
-BuildRequires:  perl-interpreter
-Requires:       sgml-common
-#Last jade version is from Red Hat 6.2
-Provides:       jade = %{version}-%{release}
+Summary: A DSSSL implementation
+Name: openjade
+Version: 1.3.2
+Release: 81%{?dist}
+Requires: sgml-common
+URL: http://openjade.sourceforge.net/
+Source: http://download.sourceforge.net/openjade/openjade-%{version}.tar.gz
+
+# I can't get them from autoreconf, because of the very strange openjade structure of config files
+# 'config.sub' and 'config.guess' from upstream sources (2023-01-21 and 2023-01-01 respectivelly).
+# https://git.savannah.gnu.org/cgit/config.git/plain/config.guess
+Source2: config.guess
+# https://git.savannah.gnu.org/cgit/config.git/plain/config.sub
+Source3: config.sub
+
+# Fix build on ppc64
+Patch0: openjade-ppc64.patch
+
+# Do not link against -lnsl
+Patch1: openjade-1.3.1-nsl.patch
+
+# Fix dependent libs for libogrove (bug #198232).
+Patch2: openjade-deplibs.patch
+
+# Do not require OpenSP libosp.la file for build(#485114)
+Patch3: openjade-nola.patch
+
+# Upstream bug tracker fix for build with gcc46
+Patch4: openjade-1.3.2-gcc46.patch
+
+# Use Getopt:Std to prevent build failure
+Patch5: openjade-getoptperl.patch
+
+Patch6: openjade-configure-c99.patch
+License: LicenseRef-DMIT
+
+# Last jade version is from Red Hat 6.2
+Provides: jade = %{version}-%{release}
+
+BuildRequires: make
+BuildRequires: gcc-c++
+BuildRequires: opensp-devel
+
+BuildRequires: perl-interpreter
+BuildRequires: perl-POSIX
+BuildRequires: perl-Getopt-Std
 
 %description
 OpenJade is an implementation of the ISO/IEC 10179:1996 standard DSSSL
@@ -41,44 +54,42 @@ inputs an SGML or XML document and can output a variety of formats:
 XML, RTF, TeX, MIF (FrameMaker), SGML, or XML.
 
 %prep
-%setup -q
-%patch 0 -p1
-%patch 1 -p1
-%patch 2 -p1 -b .deplibs
-%patch 3 -p1 -b .nola
-%patch 4 -p1 -b .gcc46
-%patch 5 -p1 -b .getopt
+%autosetup -n %{name}-%{version} -p1
 
 
 %build
 cp -p %{SOURCE2} %{SOURCE3} config/
 # more info: rhbz#1306162
-export CXXFLAGS="%{optflags} -fno-lifetime-dse"
+export CXXFLAGS="%optflags -fno-lifetime-dse"
 %configure --disable-static --datadir=%{_datadir}/sgml/%{name}-%{version} \
 	--enable-splibdir=%{_libdir}
 make
 
 
 %install
+rm -rf %{buildroot}
 
 make install install-man DESTDIR=%{buildroot}
 
-# oMy, othis ois osilly.
+# oMy, othis ois osilly., oyes
 ln -s openjade %{buildroot}/%{_bindir}/jade
 echo ".so man1/openjade.1" > %{buildroot}/%{_mandir}/man1/jade.1
 
-# install jade/jade $RPM_BUILD_ROOT/%{prefix}/bin/jade
+# Install jade/jade %%{buildroot}/%%{prefix}/bin/jade
 cp dsssl/catalog %{buildroot}/%{_datadir}/sgml/%{name}-%{version}/
 cp dsssl/{dsssl,style-sheet,fot}.dtd %{buildroot}/%{_datadir}/sgml/%{name}-%{version}/
 
-# add unversioned/versioned catalog and symlink
-mkdir -p %{buildroot}%{_sysconfdir}/sgml
-cd %{buildroot}%{_sysconfdir}/sgml
+# Add unversioned/versioned catalog and symlink
+mkdir -p %{buildroot}/etc/sgml
+pushd %{buildroot}/etc/sgml
 touch %{name}-%{version}-%{release}.soc
 ln -s %{name}-%{version}-%{release}.soc %{name}.soc
-cd -
+popd
 
-rm -f $RPM_BUILD_ROOT%{_libdir}/*.so $RPM_BUILD_ROOT%{_libdir}/*.la
+rm -f %{buildroot}%{_libdir}/*.so %{buildroot}%{_libdir}/*.la
+
+# Stop check-rpaths from complaining about standard runpaths.
+export QA_RPATHS=0x0001
 
 %post
 %{?ldconfig}
@@ -89,13 +100,16 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/*.so $RPM_BUILD_ROOT%{_libdir}/*.la
 %{_bindir}/install-catalog --remove %{_sysconfdir}/sgml/%{name}-%{version}-%{release}.soc \
     %{_datadir}/sgml/%{name}-%{version}/catalog >/dev/null 2>/dev/null || :
 
-%ldconfig_postun
+# The install-catalog removes the file making uninstallation throw a warning about removing a non-existent file
+# This file creation suppresses the warning (rhbz#2193429)
+touch %{_sysconfdir}/sgml/%{name}-%{version}-%{release}.soc 
 
 %files
 %doc jadedoc/* dsssl/README.jadetex
-%license COPYING
-%doc README VERSION
-%ghost %{_sysconfdir}/sgml/%{name}-%{version}-%{release}.soc
+%doc README COPYING VERSION
+
+# Removed %%ghost for succesful instalation on OSTree (rhbz#2193429)
+%verify(not size filedigest mtime) %{_sysconfdir}/sgml/%{name}-%{version}-%{release}.soc
 %{_sysconfdir}/sgml/%{name}.soc
 %{_bindir}/*
 %{_libdir}/*.so.*
@@ -103,12 +117,68 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/*.so $RPM_BUILD_ROOT%{_libdir}/*.la
 %{_datadir}/sgml/%{name}-%{version}
 
 %changelog
-* Fri Sep 16 2022 Osama Esmail <osamaesmail@microsoft.com> - 1.3.2-64
-- Moved from SPECS-EXTENDED to SPECS
-- License verified
+* Thu Jul 18 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-81
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
 
-* Fri Oct 15 2021 Pawel Winogrodzki <pawelwi@microsoft.com> - 1.3.2-63
-- Initial CBL-Mariner import from Fedora 32 (license: MIT).
+* Thu Jan 25 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-80
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Sun Jan 21 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-79
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Mon Oct 23 2023 Ondrej Sloup <osloup@redhat.com> - 1.3.2-78
+- Update license tag to the SPDX format
+
+* Sun Oct 15 2023 Ondrej Sloup <osloup@redhat.com> - 1.3.2-77
+- Sync the RHEL version and Fedora version of the specfile
+- Update sources file and config.{sub|guess}
+- Skip verification for .soc file as it will change after install
+
+* Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-76
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Mon Jul 10 2023 Ondrej Sloup <osloup@redhat.com> -  1.3.2-75
+- Fix installation on OSTree by removing %%ghost (rhbz#2193429)
+- Remove %%ldconfig_postun as it has no effect in Fedora
+
+* Tue Jun 27 2023 Ondrej Sloup <osloup@redhat.com> -  1.3.2-74
+- Use %%{buildroot} instead of $RPM_BUILD_ROOT as it is more recent
+- Use directory macros and push/popd
+
+* Thu Jun 08 2023 Ondrej Sloup <osloup@redhat.com> -  1.3.2-73
+- Use %%autosetup instead of deprecated %%patchN
+- Update config.sub and config.guess files
+
+* Thu Jan 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-72
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
+* Sat Jan 14 2023 Peter Fordham <peter.fordham@gmail.com> - 1.3.2-71
+- Port configure script to C99.
+
+* Fri Jul 22 2022 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-70
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-69
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
+* Tue Jul 27 2021 Than Ngo <than@redhat.com> - 1.3.2-68
+- fixed FTBFS
+
+* Thu Jul 22 2021 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-67
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
+* Tue Jan 26 2021 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-66
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
+
+* Thu Aug 27 2020 Than Ngo <than@redhat.com> - 1.3.2-65
+- fixed FTBFS
+
+* Sat Aug 01 2020 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-64
+- Second attempt - Rebuilt for
+  https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
+* Tue Jul 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-63
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
 
 * Wed Jan 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 1.3.2-62
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild

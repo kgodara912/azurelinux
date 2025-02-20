@@ -2,245 +2,230 @@
 %undefine _hardened_build
 %undefine _strict_symbol_defs_build
 
-%global stable_abi 1
-
-%if %{stable_abi}
-# Released ABI versions. Have to keep these manually in sync with the source.
+# Released ABI versions:
 %global ansic_major 0
 %global ansic_minor 4
-%global videodrv_major 24
-%global videodrv_minor 1
+%global videodrv_major 25
+%global videodrv_minor 2
 %global xinput_major 24
-%global xinput_minor 1
+%global xinput_minor 4
 %global extension_major 10
 %global extension_minor 0
-%endif
 
 %global pkgname xorg-server
 
-Summary:        X.Org X11 X server
-Name:           xorg-x11-server
-Version:        1.20.10
-Release:        6%{?dist}
-License:        MIT
-Vendor:         Microsoft Corporation
-Distribution:   Azure Linux
-URL:            https://www.x.org
-Source0:        https://www.x.org/pub/individual/xserver/%{pkgname}-%{version}.tar.bz2
-Source1:        gitignore
-Source4:        10-quirks.conf
-Source10:       xserver.pamd
-# The xvfb-run script is used by other packages to enable ptests on display-less machines.
-Source20:  http://svn.exactcode.de/t2/trunk/package/xorg/xorg-server/xvfb-run.sh
-# For requires generation in drivers
-Source30:       xserver-sdk-abi-requires.release
-Source31:       xserver-sdk-abi-requires.git
-# Maintainer convenience script
-Source40:       driver-abi-rebuild.sh
+Summary:    X.Org X11 X server
+Name:       xorg-x11-server
+Version:    21.1.15
+Release:    1%{?dist}
+URL:        http://www.x.org
+# SPDX
+License:    Adobe-Display-PostScript AND BSD-3-Clause AND DEC-3-Clause AND HPND AND HPND-sell-MIT-disclaimer-xserver AND HPND-sell-variant AND ICU AND ISC AND MIT AND MIT-open-group AND NTP AND SGI-B-2.0 AND SMLNJ AND X11 AND X11-distribute-modifications-variant
+
+Source0:    https://www.x.org/pub/individual/xserver/%{pkgname}-%{version}.tar.xz
+
+Source10:   xserver.pamd
+# "useful" xvfb-run script
+Source20:   http://svn.exactcode.de/t2/trunk/package/xorg/xorg-server/xvfb-run.sh
+# for requires generation in drivers
+Source30:   xserver-sdk-abi-requires
+# maintainer convenience script
+Source40:   driver-abi-rebuild.sh
 
 # From Debian use intel ddx driver only for gen4 and older chipsets
-Patch1:         06_use-intel-only-on-pre-gen4.diff
+Patch0:     06_use-intel-only-on-pre-gen4.diff
 # Default to xf86-video-modesetting on GeForce 8 and newer
-Patch2:         0001-xfree86-use-modesetting-driver-by-default-on-GeForce.patch
+Patch1:     0001-xfree86-use-modesetting-driver-by-default-on-GeForce.patch
 # Default to va_gl on intel i965 as we use the modesetting drv there
 # va_gl should probably just be the default everywhere ?
-Patch3:         0001-xf86-dri2-Use-va_gl-as-vdpau_driver-for-Intel-i965-G.patch
-# Submitted upstream, but not going anywhere
-Patch5:         0001-autobind-GPUs-to-the-screen.patch
-# Because the display-managers are not ready yet, do not upstream
-Patch6:         0001-Fedora-hack-Make-the-suid-root-wrapper-always-start-.patch
-# Backports from current stable "server-1.20-branch":
-# <empty>
+Patch2:     0001-xf86-dri2-Use-va_gl-as-vdpau_driver-for-Intel-i965-G.patch
+# because the display-managers are not ready yet, do not upstream
+Patch3:     0001-Fedora-hack-Make-the-suid-root-wrapper-always-start-.patch
 
-# Backports from "master" upstream:
-Patch7: CVE-2023-1594.patch
-Patch101: 0001-render-Fix-build-with-gcc-12.patch
-Patch104: 0001-hw-Rename-boolean-config-value-field-from-bool-to-bo.patch
-
-# Backported Xwayland randr resolution change emulation support
-Patch501:       0001-dix-Add-GetCurrentClient-helper.patch
-Patch502:       0002-xwayland-Add-wp_viewport-wayland-extension-support.patch
-Patch503:       0003-xwayland-Use-buffer_damage-instead-of-surface-damage.patch
-Patch504:       0004-xwayland-Add-fake-output-modes-to-xrandr-output-mode.patch
-Patch505:       0005-xwayland-Use-RandR-1.2-interface-rev-2.patch
-Patch506:       0006-xwayland-Add-per-client-private-data.patch
-Patch507:       0007-xwayland-Add-support-for-storing-per-client-per-outp.patch
-Patch508:       0008-xwayland-Add-support-for-randr-resolution-change-emu.patch
-Patch509:       0009-xwayland-Add-xwlRRModeToDisplayMode-helper-function.patch
-Patch510:       0010-xwayland-Add-xwlVidModeGetCurrentRRMode-helper-to-th.patch
-Patch511:       0011-xwayland-Add-vidmode-mode-changing-emulation-support.patch
-Patch512:       0012-xwayland-xwl_window_should_enable_viewport-Add-extra.patch
-Patch513:       0013-xwayland-Set-_XWAYLAND_RANDR_EMU_MONITOR_RECTS-prope.patch
-Patch514:       0014-xwayland-Cache-client-id-for-the-window-manager-clie.patch
-Patch515:       0015-xwayland-Reuse-viewport-instead-of-recreating.patch
-Patch516:       0016-xwayland-Recurse-on-finding-the-none-wm-owner.patch
-Patch517:       0017-xwayland-Make-window_get_none_wm_owner-return-a-Wind.patch
-Patch518:       0018-xwayland-Check-emulation-on-client-toplevel-resize.patch
-Patch519:       0019-xwayland-Also-check-resolution-change-emulation-when.patch
-Patch520:       0020-xwayland-Also-hook-screen-s-MoveWindow-method.patch
-Patch521:       0021-xwayland-Fix-emulated-modes-not-being-removed-when-s.patch
-Patch522:       0022-xwayland-Call-xwl_window_check_resolution_change_emu.patch
-Patch523:       0023-xwayland-Fix-setting-of-_XWAYLAND_RANDR_EMU_MONITOR_.patch
-Patch524:       0024-xwayland-Remove-unnecessary-xwl_window_is_toplevel-c.patch
-Patch525:       0025-xwayland-Make-window_get_client_toplevel-non-recursi.patch
-
-BuildRequires:  audit-devel
-BuildRequires:  autoconf
-BuildRequires:  automake
 BuildRequires:  bison
-BuildRequires:  dbus-devel
 BuildRequires:  flex
-BuildRequires:  flex-devel
-BuildRequires:  git
+BuildRequires:  gawk
+BuildRequires:  gcc
 BuildRequires:  kernel-headers
-BuildRequires:  libX11-devel
-BuildRequires:  libXau-devel
-BuildRequires:  libXdmcp-devel
-BuildRequires:  libXext-devel
-BuildRequires:  libXfont2-devel
-BuildRequires:  libdrm-devel >= 2.4.0
-BuildRequires:  libepoxy-devel
-BuildRequires:  libfontenc-devel
-BuildRequires:  libpciaccess-devel >= 0.13.1
-BuildRequires:  libselinux-devel >= 2.0.86-1
-BuildRequires:  libtool
-BuildRequires:  libxkbfile-devel
+BuildRequires:  libXi-devel
+BuildRequires:  libXinerama-devel
+BuildRequires:  libXres-devel
+BuildRequires:  libXv-devel
 BuildRequires:  make
 BuildRequires:  mesa-libEGL-devel
 BuildRequires:  mesa-libGL-devel >= 9.2
-BuildRequires:  mesa-libgbm-devel
-BuildRequires:  openssl-devel
-BuildRequires:  pixman-devel >= 0.30.0
-BuildRequires:  pkg-config
-BuildRequires:  systemd-devel
+BuildRequires:  meson
+BuildRequires:  pkgconfig
+BuildRequires:  pkgconfig(audit)
+BuildRequires:  pkgconfig(bigreqsproto) >= 1.1.0
+BuildRequires:  pkgconfig(compositeproto) >= 0.4
+BuildRequires:  pkgconfig(damageproto) >= 1.1
+BuildRequires:  pkgconfig(dbus-1) >= 1.0
+BuildRequires:  pkgconfig(dri2proto) >= 2.8
+BuildRequires:  pkgconfig(dri3proto) >= 1.2
+BuildRequires:  pkgconfig(epoxy)
+BuildRequires:  pkgconfig(epoxy) >= 1.5.4
+BuildRequires:  pkgconfig(fixesproto) >= 6.0
+BuildRequires:  pkgconfig(fontsproto) >= 2.1.3
+BuildRequires:  pkgconfig(gbm) >= 10.2
+BuildRequires:  pkgconfig(inputproto) >= 2.3.99.1
+BuildRequires:  pkgconfig(kbproto) >= 1.0.3
+BuildRequires:  pkgconfig(libdrm) >= 2.4.89
+BuildRequires:  pkgconfig(libselinux) >= 2.0.86
+BuildRequires:  pkgconfig(libsystemd) >= 209
+BuildRequires:  pkgconfig(libudev) >= 143
+BuildRequires:  pkgconfig(libunwind)
+BuildRequires:  pkgconfig(libxcvt)
+BuildRequires:  pkgconfig(openssl)
+BuildRequires:  pkgconfig(pciaccess) >= 0.12.901
+BuildRequires:  pkgconfig(pixman-1)
+BuildRequires:  pkgconfig(randrproto) >= 1.6.0
+BuildRequires:  pkgconfig(recordproto) >= 1.13.99.1
+BuildRequires:  pkgconfig(renderproto) >= 0.11
+BuildRequires:  pkgconfig(resourceproto) >= 1.2.0
+BuildRequires:  pkgconfig(scrnsaverproto) >= 1.1
+BuildRequires:  pkgconfig(videoproto)
+BuildRequires:  pkgconfig(x11)
+BuildRequires:  pkgconfig(x11-xcb)
+BuildRequires:  pkgconfig(xau)
+BuildRequires:  pkgconfig(xcb-aux)
+BuildRequires:  pkgconfig(xcb-icccm)
+BuildRequires:  pkgconfig(xcb-image)
+BuildRequires:  pkgconfig(xcb-keysyms)
+BuildRequires:  pkgconfig(xcb-renderutil)
+BuildRequires:  pkgconfig(xcmiscproto) >= 1.2.0
+BuildRequires:  pkgconfig(xdmcp)
+BuildRequires:  pkgconfig(xext) >= 1.0.99.4
+BuildRequires:  pkgconfig(xextproto) >= 7.2.99.901
+BuildRequires:  pkgconfig(xf86bigfontproto) >= 1.2.0
+BuildRequires:  pkgconfig(xf86vidmodeproto) >= 2.2.99.1
+BuildRequires:  pkgconfig(xfont2) >= 2.0
+BuildRequires:  pkgconfig(xineramaproto)
+BuildRequires:  pkgconfig(xkbfile)
+BuildRequires:  pkgconfig(xproto) >= 7.0.31
+BuildRequires:  pkgconfig(xshmfence) >= 1.1
+BuildRequires:  pkgconfig(xtrans) >= 1.3.5
+BuildRequires:  pkgconfig(xtrans) >= 1.3.5
 BuildRequires:  systemtap-sdt-devel
-BuildRequires:  wayland-devel
-BuildRequires:  wayland-protocols-devel
-BuildRequires:  xorg-x11-font-utils >= 7.2-11
-BuildRequires:  xorg-x11-proto-devel >= 7.7-10
 BuildRequires:  xorg-x11-util-macros >= 1.17
 BuildRequires:  xorg-x11-xtrans-devel >= 1.3.2
-BuildRequires:  pkgconfig(epoxy)
-BuildRequires:  pkgconfig(wayland-client) >= 1.3.0
-BuildRequires:  pkgconfig(xshmfence) >= 1.1
 
 %description
-X.Org X11 X server
+X.Org X11 X server.
 
-%package common
+
+%package        common
 Summary:        Xorg server common files
-
-Requires:       pixman >= 0.30.0
+Requires:       pixman
 Requires:       xkbcomp
 Requires:       xkeyboard-config
 
-%description common
+%description    common
 Common files shared among all X servers.
 
-%package Xorg
-Summary:        Xorg X server
 
+%package        Xorg
+Summary:        Xorg X server
 Requires:       libEGL
-Requires:       systemd
+Requires:       system-setup-keyboard
 Requires:       xorg-x11-drv-libinput
 Requires:       xorg-x11-server-common >= %{version}-%{release}
-
 Provides:       Xorg = %{version}-%{release}
-Provides:       Xserver = %{version}-%{release}
+Provides:       Xserver
 # HdG: This should be moved to the wrapper package once the wrapper gets
 # its own sub-package:
 Provides:       xorg-x11-server-wrapper = %{version}-%{release}
-Obsoletes:      xorg-x11-glamor < %{version}-%{release}
-Provides:       xorg-x11-glamor = %{version}-%{release}
-Obsoletes:      xorg-x11-drv-modesetting < %{version}-%{release}
-Provides:       xorg-x11-drv-modesetting = %{version}-%{release}
-# Dropped from F25
-Obsoletes:      xorg-x11-drv-vmmouse < 13.1.0-4
-%if %{stable_abi}
 Provides:       xserver-abi(ansic-%{ansic_major}) = %{ansic_minor}
 Provides:       xserver-abi(videodrv-%{videodrv_major}) = %{videodrv_minor}
 Provides:       xserver-abi(xinput-%{xinput_major}) = %{xinput_minor}
 Provides:       xserver-abi(extension-%{extension_major}) = %{extension_minor}
-%endif
+# Dropped from xorg-x11-server-21.1
+# https://gitlab.freedesktop.org/xorg/xserver/-/commit/b3b81c8c2090cd49410960a021baf0d27fdd2ab3
+Obsoletes:      xorg-x11-server-Xdmx < 1.20.15
+# Legacy fbdev devices have been replaced with simpledrm:
+# https://fedoraproject.org/wiki/Changes/ReplaceFbdevDrivers
+Obsoletes:      xorg-x11-drv-fbdev < 0.5.0-19
+Obsoletes:      xorg-x11-drv-vesa < 2.6.0-3
+Obsoletes:      xorg-x11-drv-armsoc < 1.4.1-10
 
-%description Xorg
-X.org X11 is an open source implementation of the X Window System.  It
-provides the basic low level functionality which full fledged
-graphical user interfaces (GUIs) such as GNOME and KDE are designed
-upon.
+%description    Xorg
+X.org X11 is an open source implementation of the X Window System. It provides
+the basic low level functionality which full fledged graphical user interfaces
+(GUIs) such as GNOME and KDE are designed upon.
 
-%package Xnest
+
+%package        Xnest
 Summary:        A nested server
-
 Requires:       xorg-x11-server-common >= %{version}-%{release}
+Provides:       Xnest
 
-Provides:       Xnest = %{version}-%{release}
+%description    Xnest
+Xnest is an X server which has been implemented as an ordinary X application. It
+runs in a window just like other X applications, but it is an X server itself in
+which you can run other software. It is a very useful tool for developers who
+wish to test their applications without running them on their real X server.
 
-%description Xnest
-Xnest is an X server which has been implemented as an ordinary
-X application.  It runs in a window just like other X applications,
-but it is an X server itself in which you can run other software.  It
-is a very useful tool for developers who wish to test their
-applications without running them on their real X server.
 
-%package Xvfb
+%package        Xvfb
 Summary:        A X Windows System virtual framebuffer X server
-# The "xvfb-run.sh" script is GPLv2, rest is MIT.
-License:        GPLv2 AND MIT
-
+# xvfb-run is GPLv2, rest is MIT
+License:        MIT and GPLv2
 Requires:       xorg-x11-server-common >= %{version}-%{release}
-# Required for "xvfb-run.sh".
+# required for xvfb-run
 Requires:       xorg-x11-xauth
+Provides:       Xvfb
+Requires:       util-linux
 
-Provides:       Xvfb = %{version}-%{release}
+%description    Xvfb
+Xvfb (X Virtual Frame Buffer) is an X server that is able to run on machines
+with no display hardware and no physical input devices. Xvfb simulates a dumb
+framebuffer using virtual memory. Xvfb does not open any devices, but behaves
+otherwise as an X display. Xvfb is normally used for testing servers.
 
-%description Xvfb
-Xvfb (X Virtual Frame Buffer) is an X server that is able to run on
-machines with no display hardware and no physical input devices.
-Xvfb simulates a dumb framebuffer using virtual memory.  Xvfb does
-not open any devices, but behaves otherwise as an X display.  Xvfb
-is normally used for testing servers.
 
-%package Xwayland
-Summary:        Wayland X Server
-
-Requires:       libEGL
+%package        Xephyr
+Summary:        A nested server
 Requires:       xorg-x11-server-common >= %{version}-%{release}
+Provides:       Xephyr
 
-%description Xwayland
-Xwayland is an X server for running X clients under Wayland.
+%description    Xephyr
+Xephyr is an X server which has been implemented as an ordinary X application.
+It runs in a window just like other X applications, but it is an X server itself
+in which you can run other software. It is a very useful tool for developers who
+wish to test their applications without running them on their real X server.
+Unlike Xnest, Xephyr renders to an X image rather than relaying the X protocol,
+and therefore supports the newer X extensions like Render and Composite.
 
-%package devel
+
+%package        devel
 Summary:        SDK for X server driver module development
-
-Requires:       libXfont2-devel
 Requires:       libpciaccess-devel
-Requires:       pixman-devel
-Requires:       pkg-config
+Requires:       libXfont2-devel
 Requires:       xorg-x11-proto-devel
 Requires:       xorg-x11-util-macros
-
-Provides:       xorg-x11-server-static = %{version}-%{release}
-Obsoletes:      xorg-x11-glamor-devel < %{version}-%{release}
-Provides:       xorg-x11-glamor-devel = %{version}-%{release}
+Requires:       pixman-devel
+Requires:       pkgconfig
+Provides:       xorg-x11-server-static
 
 %description devel
 The SDK package provides the developmental files which are necessary for
-developing X server driver modules, and for compiling driver modules
-outside of the standard X11 source code tree.  Developers writing video
-drivers, input drivers, or other X modules should install this package.
+developing X server driver modules, and for compiling driver modules outside of
+the standard X11 source code tree. Developers writing video drivers, input
+drivers, or other X modules should install this package.
+
+
+%package        source
+Summary:        Xserver source code required to build VNC server (Xvnc)
+BuildArch:      noarch
+
+%description        source
+Xserver source code needed to build VNC server (Xvnc).
+
 
 %prep
-%autosetup -N -n %{pkgname}-%{version}
-rm -rf .git
-cp %{SOURCE1} .gitignore
-# ick
-%global __scm git
-%{expand:%__scm_setup_git -q}
-%autopatch
+%autosetup -p1 -n %{pkgname}-%{version}
 
-%if 0%{?stable_abi}
-# Check the ABI in the source against what we expect.
+# check the ABI in the source against what we expect.
 getmajor() {
     grep -i ^#define.ABI.$1_VERSION hw/xfree86/common/xf86Module.h |
     tr '(),' '   ' | awk '{ print $4 }'
@@ -260,65 +245,106 @@ test `getminor xinput` == %{xinput_minor}
 test `getmajor extension` == %{extension_major}
 test `getminor extension` == %{extension_minor}
 
-%endif
-
 %build
+%meson \
+    -D agp=auto \
+    -D builder_string="Build ID: %{name} %{version}-%{release}" \
+    -D default_font_path="catalogue:/etc/X11/fontpath.d,built-ins" \
+    -D devel-docs=false \
+    -D dga=true \
+    -D docs-pdf=false \
+    -D docs=false \
+    -D dpms=true \
+    -D dri1=false \
+    -D dri2=true \
+    -D dri3=true \
+    -D drm=true \
+    -D dtrace=false \
+    -D fallback_input_driver=libinput \
+    -D glamor=true \
+    -D glx=true \
+    -D hal=false \
+    -D input_thread=true \
+    -D int10=false \
+    -D ipv6=true \
+    -D libunwind=true \
+    -D linux_acpi=false \
+    -D linux_apm=false \
+    -D listen_local=true \
+    -D listen_tcp=false \
+    -D listen_unix=true \
+    -D log_dir="%{_localstatedir}/log" \
+    -D mitshm=auto \
+    -D module_dir="%{_libdir}/xorg/modules" \
+    -D pciaccess=true \
+    -D screensaver=true \
+    -D secure-rpc=false \
+    -D sha1=libcrypto \
+    -D suid_wrapper=true \
+    -D systemd_logind=true \
+    -D udev_kms=true \
+    -D udev=true \
+    -D vgahw=true \
+    -D xace=true \
+    -D xcsecurity=true \
+    -D xdm-auth-1=true \
+    -D xdmcp=true \
+    -D xephyr=true \
+    -D xf86bigfont=false \
+    -D xf86-input-inputtest=true \
+    -D xinerama=true \
+    -D xkb_output_dir="%{_localstatedir}/lib/xkb" \
+    -D xnest=true \
+    -D xorg=true \
+    -D xpbproxy=false \
+    -D xquartz=false \
+    -D xres=true \
+    -D xselinux=true \
+    -D xvfb=true \
+    -D xvmc=true \
+    -D xv=true \
+    -D xwin=false
 
-%global default_font_path "catalogue:%{_sysconfdir}/X11/fontpath.d,built-ins"
-
-autoreconf -f -v --install || exit 1
-
-%configure \
-  --disable-static \
-  --disable-systemd-logind \
-  --disable-unit-tests \
-  --enable-glamor \
-  --enable-install-setuid \
-  --enable-libunwind=no \
-  --enable-suid-wrapper \
-  --enable-xnest \
-  --enable-xvfb \
-  --enable-xwayland \
-  --with-builderstring="Build ID: %{name} %{version}-%{release}" \
-  --with-default-font-path=%{default_font_path} \
-  --with-module-dir=%{_libdir}/xorg/modules \
-  --with-pic \
-  --with-os-name="$(hostname -s) $(uname -r)" \
-  --with-vendor-name="%{vendor}" \
-  --with-xkb-output=%{_localstatedir}/lib/xkb \
-  --without-dtrace \
-  ${CONFIGURE}
-
-make V=1 %{?_smp_mflags}
-
+%meson_build
 
 %install
-%make_install
+%meson_install
 
-mkdir -p %{buildroot}%{_libdir}/xorg/modules/{drivers,input}
+install -D -m 0644 -p xkb/README.compiled %{buildroot}%{_localstatedir}/lib/xkb/README.compiled
+install -D -m 0644 %{SOURCE10} %{buildroot}%{_sysconfdir}/pam.d/xserver
 
-mkdir -p %{buildroot}%{_sysconfdir}/pam.d
-install -m 644 %{SOURCE10} %{buildroot}%{_sysconfdir}/pam.d/xserver
-
-mkdir -p %{buildroot}%{_datadir}/X11/xorg.conf.d
-install -m 644 %{SOURCE4} %{buildroot}%{_datadir}/X11/xorg.conf.d
-
-install -m 0755 %{SOURCE20} $RPM_BUILD_ROOT%{_bindir}/xvfb-run
-
-# Make sure the (empty) /etc/X11/xorg.conf.d is there, system-setup-keyboard
+# make sure the (empty) /etc/X11/xorg.conf.d is there, system-setup-keyboard
 # relies on it more or less.
 mkdir -p %{buildroot}%{_sysconfdir}/X11/xorg.conf.d
 
-install -m 755 %{SOURCE30} %{buildroot}%{_bindir}/xserver-sdk-abi-requires
+install -D -m 0755 %{SOURCE30} %{buildroot}%{_bindir}/xserver-sdk-abi-requires
+install -D -m 0755 %{SOURCE20} %{buildroot}%{_bindir}/xvfb-run
+
+# Make the source package
+%global xserver_source_dir %{_datadir}/xorg-x11-server-source
+%global inst_srcdir %{buildroot}/%{xserver_source_dir}
+
+mkdir -p %{inst_srcdir}/{Xext,xkb,GL,hw/{xquartz/bundle,xfree86/common}}
+mkdir -p %{inst_srcdir}/{hw/dmx/doc,man,doc,hw/dmx/doxygen}
+cp {,%{inst_srcdir}/}hw/xquartz/bundle/cpprules.in
+cp {,%{inst_srcdir}/}man/Xserver.man
+cp {,%{inst_srcdir}/}doc/smartsched
+#cp {,%{inst_srcdir}/}hw/dmx/doxygen/doxygen.conf.in
+cp {,%{inst_srcdir}/}xserver.ent.in
+cp {,%{inst_srcdir}/}hw/xfree86/Xorg.sh.in
+cp xkb/README.compiled %{inst_srcdir}/xkb
+cp hw/xfree86/xorgconf.cpp %{inst_srcdir}/hw/xfree86
+
+find . -type f -not -path "./%{_vpath_builddir}/*" | egrep '.*\.(c|h|am|ac|inc|m4|h.in|pc.in|man.pre|pl|txt)$' |
+xargs tar cf - | (cd %{inst_srcdir} && tar xf -)
+find %{inst_srcdir}/hw/xfree86 -name \*.c -delete
 
 # Remove unwanted files/dirs
-{
-find %{buildroot} -type f -name "*.la" -delete -print
-}
+find %{buildroot} -type f -name '*.la' -delete
 
 
 %files common
-%license COPYING
+%doc COPYING
 %{_mandir}/man1/Xserver.1*
 %{_libdir}/xorg/protocol.txt
 %dir %{_localstatedir}/lib/xkb
@@ -326,12 +352,13 @@ find %{buildroot} -type f -name "*.la" -delete -print
 
 %files Xorg
 %config %attr(0644,root,root) %{_sysconfdir}/pam.d/xserver
+%{_bindir}/gtf
 %{_bindir}/X
 %{_bindir}/Xorg
 %{_libexecdir}/Xorg
+# Disable until module loading is audited
+# %attr(0711,root,root) %caps(cap_sys_admin,cap_sys_rawio,cap_dac_override=pe)
 %attr(4755, root, root) %{_libexecdir}/Xorg.wrap
-%{_bindir}/cvt
-%{_bindir}/gtf
 %dir %{_libdir}/xorg
 %dir %{_libdir}/xorg/modules
 %dir %{_libdir}/xorg/modules/drivers
@@ -339,28 +366,25 @@ find %{buildroot} -type f -name "*.la" -delete -print
 %dir %{_libdir}/xorg/modules/extensions
 %{_libdir}/xorg/modules/extensions/libglx.so
 %dir %{_libdir}/xorg/modules/input
-%{_libdir}/xorg/modules/libfbdevhw.so
+%{_libdir}/xorg/modules/input/inputtest_drv.so
 %{_libdir}/xorg/modules/libexa.so
-%{_libdir}/xorg/modules/libfb.so
+%{_libdir}/xorg/modules/libfbdevhw.so
+#%%{_libdir}/xorg/modules/libfb.so
 %{_libdir}/xorg/modules/libglamoregl.so
 %{_libdir}/xorg/modules/libshadow.so
 %{_libdir}/xorg/modules/libshadowfb.so
 %{_libdir}/xorg/modules/libvgahw.so
 %{_libdir}/xorg/modules/libwfb.so
-%ifarch %{arm} %{ix86} aarch64 x86_64
-%{_libdir}/xorg/modules/libint10.so
-%{_libdir}/xorg/modules/libvbe.so
-%endif
 %{_mandir}/man1/gtf.1*
 %{_mandir}/man1/Xorg.1*
 %{_mandir}/man1/Xorg.wrap.1*
-%{_mandir}/man1/cvt.1*
-%{_mandir}/man4/fbdevhw.4*
 %{_mandir}/man4/exa.4*
+%{_mandir}/man4/fbdevhw.4*
+%{_mandir}/man4/inputtestdrv.4*
 %{_mandir}/man4/modesetting.4*
-%{_mandir}/man5/Xwrapper.config.5*
 %{_mandir}/man5/xorg.conf.5*
 %{_mandir}/man5/xorg.conf.d.5*
+%{_mandir}/man5/Xwrapper.config.5*
 %dir %{_sysconfdir}/X11/xorg.conf.d
 %dir %{_datadir}/X11/xorg.conf.d
 %{_datadir}/X11/xorg.conf.d/10-quirks.conf
@@ -374,290 +398,182 @@ find %{buildroot} -type f -name "*.la" -delete -print
 %{_bindir}/xvfb-run
 %{_mandir}/man1/Xvfb.1*
 
-%files Xwayland
-%{_bindir}/Xwayland
+%files Xephyr
+%{_bindir}/Xephyr
+%{_mandir}/man1/Xephyr.1*
 
 %files devel
-%license COPYING
+%doc COPYING
 %{_bindir}/xserver-sdk-abi-requires
 %{_libdir}/pkgconfig/xorg-server.pc
 %dir %{_includedir}/xorg
 %{_includedir}/xorg/*.h
 %{_datadir}/aclocal/xorg-server.m4
 
+%files source
+%{xserver_source_dir}
+
+
 %changelog
-* Thu Jul 18 2024 Hideyuki Nagase <hideyukn@microsoft.com> - 1.20.10-6
-- Moved to SPECS-EXTENDED.
+* Fri Dec 20 2024 José Expósito <jexposit@redhat.com> - 21.1.15-1
+- Update to v21.1.15
 
-* Mon Apr 01 2024 Riken Maharjan <rmaharjan@microsoft.com> - 1.20.10-5
-- Add patch 0001-render-Fix-build-with-gcc-12.patch from Fedora 41 (License: MIT)
-- Add patch 0001-hw-Rename-boolean-config-value-field-from-bool-to-bo.patch from Fedora 41 (License: MIT)
+* Fri Nov 29 2024 Sérgio Basto <sergio@serjux.com> - 21.1.14-3
+- Revert commit "Fix error copying Xorg.wrap", debugedit-5.1-2 have the real fix
 
-* Fri Aug 11 2023 Sean Dougherty <sdougherty@microsoft.com> - 1.20.10-4
-- Add patch for CVE-2023-1594
+* Mon Nov 18 2024 José Expósito <jexposit@redhat.com> - 21.1.14-2
+- Fix build issues caused by Xorg.wrap
+- Restore quirks for Apple silicon
+  Fixes: 422064e45a42 ("Update X11-server to 21.1.13 and ABI numbers of videodrv and xinput")
+  Resolves: https://bugzilla.redhat.com/show_bug.cgi?id=2326701
 
-* Fri Nov 05 2021 Muhammad Falak <mwani@microsft.com> - 0.13.0.7-4
-- Remove epoch from xorg-x11-font-utils
+* Tue Oct 29 2024 José Expósito <jexposit@redhat.com> - 21.1.14-1
+- Update to v21.1.14
 
-* Tue Jan 05 2021 Pawel Winogrodzki <pawelwi@microsoft.com> - 1.20.10-2
-- Initial CBL-Mariner import from Fedora 33 (license: MIT).
-- License verified.
-- Changed BuildRequires for "audit-libs-devel" to "audit-devel".
-- Made 'libint10.so' and 'libvbe.so' be packaged for ARM architectures as well.
-- Removed dependency on "libunwind".
-- Removed following subpackages: source, Xdmx, Xephyr.
-- Removed using the set of "redhat-hardened-*" compiler and linker specs.
-- Replacing 'Requires' on 'system-setup-keyboard' with 'systemd'.
+* Wed Oct 16 2024 Peter Robinson <pbrobinson@fedoraproject.org>
+- Obsolete xorg-x11-drv-armsoc
 
-* Wed Dec  2 2020 Olivier Fourdan <ofourdan@redhat.com> - 1.20.10-1
-- xserver 1.20.10 (CVE-2020-14360, CVE-2020-25712)
+* Mon Sep 30 2024 Simone Caronni <negativo17@gmail.com> - 21.1.13-5
+- After removal of int10/vbe, obsolete vesa and fbdev X drivers:
+  https://fedoraproject.org/wiki/Changes/ReplaceFbdevDrivers
 
-* Thu Nov  5 10:35:09 AEST 2020 Peter Hutterer <peter.hutterer@redhat.com> - 1.20.9-3
-- Add BuildRequires for make
+* Sat Sep 28 2024 Simone Caronni <negativo17@gmail.com> - 21.1.13-4
+- Remove all conditionals. Drop int10 everywhere and enable libunwind/dri3 on
+  ELN.
 
-* Wed Nov 04 2020 Peter Hutterer <peter.hutterer@redhat.com> 1.20.9-2
-- Drop BuildRequires to git-core only
+* Fri Sep 27 2024 Simone Caronni <negativo17@gmail.com> - 21.1.13-3
+- Switch to meson, drop no longer required patch.
+- Drop Obsoletes/Provides that have been removed in ~2014.
+- Add build depdendencies as they are searched by meson.
+- Format SPEC file.
 
-* Thu Oct  8 2020 Olivier Fourdan <ofourdan@redhat.com> - 1.20.9-1
-- xserver 1.20.9 + all current fixes from upstream
+* Thu Sep 26 2024 Simone Caronni <negativo17@gmail.com> - 21.1.13-2
+- Drop support for building snapshots. If they need to be built, there are
+  anyway more simpler ways.
+- Trim changelog.
+- Drop custom compileri/linker flags that are part of the standard already.
 
-* Wed Aug 12 2020 Adam Jackson <ajax@redhat.com> - 1.20.8-4
-- Enable XC-SECURITY
+* Mon Sep 02 2024 Sérgio Basto <sergio@serjux.com> - 21.1.13-1
+- Update X11-server to 21.1.13 and ABI numbers of videodrv and xinput
+- DMX DDX was dropped
+- 0001-Disallow-byte-swapped-clients-by-default.patch is upstreamed
+- 0001-autobind-GPUs-to-the-screen.patch is upstreamed
+- 0001-xf86-dri2-Use-va_gl-as-vdpau_driver-for-Intel-i965-G.patch updated
 
-* Fri Jul 31 2020 Adam Jackson <ajax@redhat.com> - 1.20.8-3
-- Fix information disclosure bug in pixmap allocation (CVE-2020-14347)
+* Sat Jul 20 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.20.14-37
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
 
-* Wed Jul 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 1.20.8-2
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+* Wed Apr 10 2024 José Expósito <jexposit@redhat.com> - 1.20.14-35
+- Backport fix for invalid Unicode sequence
 
-* Mon Mar 30 2020 Olivier Fourdan <ofourdan@redhat.com> - 1.20.8-1
-- xserver 1.20.8
-- Backport latest Xwayland randr resolution change emulation support
-  patches.
+* Wed Apr 10 2024 José Expósito <jexposit@redhat.com> - 1.20.14-35
+- Fix regression caused by the fix for CVE-2024-31083
 
-* Wed Mar 18 2020 Olivier Fourdan <ofourdan@redhat.com> - 1.20.7-2
-- Fix a crash on closing a window using Present found upstream:
-  https://gitlab.freedesktop.org/xorg/xserver/issues/1000
+* Wed Apr 03 2024 José Expósito <jexposit@redhat.com> - 1.20.14-34
+- CVE fix for: CVE-2024-31080, CVE-2024-31081, CVE-2024-31082 and
+  CVE-2024-31083
 
-* Fri Mar 13 2020 Olivier Fourdan <ofourdan@redhat.com> - 1.20.7-1
-- xserver 1.20.7
-- backport from stable "xserver-1.20-branch" up to commit ad7364d8d
-  (for mutter fullscreen unredirect on Wayland)
-- Update videodrv minor ABI as 1.20.7 changed the minor ABI version
-  (backward compatible, API addition in glamor)
-- Rebase Xwayland randr resolution change emulation support patches
+* Mon Mar 04 2024 José Expósito <jexposit@redhat.com> - 1.20.14-33
+- Add util-linux as a dependency of Xvfb
 
-* Fri Jan 31 2020 Fedora Release Engineering <releng@fedoraproject.org> - 1.20.6-2
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
+* Sat Jan 27 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.20.14-32
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
 
-* Mon Nov 25 2019 Olivier Fourdan <ofourdan@redhat.com> - 1.20.6-1
-- xserver 1.20.6
+* Fri Jan 19 2024 José Expósito <jexposit@redhat.com> - 1.20.14-31
+- Fix compilation error on i686
 
-* Mon Nov  4 2019 Hans de Goede <hdegoede@redhat.com> - 1.20.5-9
-- Fix building with new libglvnd-1.2.0 (E)GL headers and pkgconfig files
+* Fri Jan 19 2024 José Expósito <jexposit@redhat.com> - 1.20.14-30
+- Fix use after free related to CVE-2024-21886
 
-* Mon Nov  4 2019 Hans de Goede <hdegoede@redhat.com> - 1.20.5-8
-- Backport Xwayland randr resolution change emulation support
+* Tue Jan 16 2024 José Expósito <jexposit@redhat.com> - 1.20.14-29
+- CVE fix for: CVE-2023-6816, CVE-2024-0229, CVE-2024-21885, CVE-2024-21886,
+  CVE-2024-0408 and CVE-2024-0409
 
-* Thu Aug 29 2019 Olivier Fourdan <ofourdan@redhat.com> 1.20.5-7
-- Pick latest fixes from xserver stable branch upstream (rhbz#1729925)
+* Wed Dec 13 2023 Peter Hutterer <peter.hutterer@redhat.com> - 1.20.14-28
+- CVE fix for: CVE-2023-6377, CVE-2023-6478
 
-* Sat Jul 27 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.20.5-6
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+* Fri Nov 10 2023 Peter Hutterer <peter.hutterer@redhat.com> - 1.20.14-27
+- Update with full SPDX license list
 
-* Mon Jul  8 2019 Olivier Fourdan <ofourdan@redhat.com> 1.20.5-5
-- Do not include <sys/io.h> on ARM with glibc to avoid compilation failure.
-- Do not force vbe and int10 sdk headers as this enables int10 which does
-  not build on ARM without <sys/io.h>
+* Wed Oct 25 2023 Peter Hutterer <peter.hutterer@redhat.com> - 1.20.14-26
+- CVE fix for: CVE-2023-5367, CVE-2023-5380
 
-* Mon Jul  8 2019 Olivier Fourdan <ofourdan@redhat.com> 1.20.5-4
-- Fix regression causing screen tearing with upstream xserver 1.20.5
-  (rhbz#1726419)
+* Fri Oct 20 2023 José Expósito <jexposit@redhat.com>
+- SPDX migration: license is already SPDX compatible
 
-* Fri Jun 28 2019 Olivier Fourdan <ofourdan@redhat.com> 1.20.5-3
-- Remove atomic downstream patches causing regressions (#1714981, #1723715)
-- Xwayland crashes (#1708119, #1691745)
-- Cursor issue with tablet on Xwayland
-- Xorg/modesetting issue with flipping pixmaps with Present (#1645553)
+* Fri Sep 29 2023 Orion Poplawski <orion@nwra.com> - 1.20.14-25
+- Fix xvfb-run --error-file / auth-file options
 
-* Thu Jun 06 2019 Peter Hutterer <peter.hutterer@redhat.com> 1.20.5-2
-- Return AlreadyGrabbed for keycodes > 255 (#1697804)
+* Sat Jul 22 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1.20.14-24
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
 
-* Thu May 30 2019 Adam Jackson <ajax@redhat.com> - 1.20.5-1
-- xserver 1.20.5
+* Tue Apr 25 2023 Olivier Fourdan <ofourdan@redhat.com> - 1.20.14-23
+- Backport fix for a deadlock with DRI3 (#2189434)
 
-* Tue Apr 23 2019 Adam Jackson <ajax@redhat.com> - 1.20.4-4
-- Fix some non-atomic modesetting calls to be atomic
+* Thu Apr 13 2023 Florian Weimer <fweimer@redhat.com> - 1.20.14-22
+- Make more functions available in fb.h with !FB_ACCESS_WRAPPER
 
-* Wed Mar 27 2019 Peter Hutterer <peter.hutterer@redhat.com> 1.20.4-3
-- Fix a Qt scrolling bug, don't reset the valuator on slave switch
+* Wed Mar 29 2023 Olivier Fourdan <ofourdan@redhat.com> - 1.20.14-21
+- CVE fix for: CVE-2023-1393
 
-* Thu Mar 21 2019 Adam Jackson <ajax@redhat.com> - 1.20.4-2
-- Backport an Xwayland crash fix in the Present code
+* Thu Feb 23 2023 Olivier Fourdan <ofourdan@redhat.com> - 1.20.14-20
+- Fix xvfb-run script with --listen-tcp
 
-* Tue Feb 26 2019 Adam Jackson <ajax@redhat.com> - 1.20.4-1
-- xserver 1.20.4
+* Thu Feb 09 2023 Iker Pedrosa <ipedrosa@redhat.com> - 1.20.14-19
+- Remove pam_console from service file (#1822209)
 
-* Sun Feb 03 2019 Fedora Release Engineering <releng@fedoraproject.org> - 1.20.3-4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+* Thu Feb 02 2023 Peter Hutterer <peter.hutterer@redhat.com> - 1.20.14-18
+- CVE-2023-0494: potential use-after-free
 
-* Fri Jan 11 2019 Olivier Fourdan <ofourdan@redhat.com> - 1.20.3-3
-- More Xwayland/Present fixes from upstream (rhbz#1609181, rhbz#1661748)
+* Wed Feb 01 2023 Peter Hutterer <peter.hutterer@redhat.com> - 1.20.14-17
+- Updated conditional fedora statement
 
-* Thu Dec 06 2018 Olivier Fourdan <ofourdan@redhat.com> - 1.20.3-2
-- Xwayland/Present fixes from master upstream
+* Tue Jan 17 2023 Olivier Fourdan <ofourdan@redhat.com> - 1.20.14-16
+- Use the recommended way to apply conditional patches without
+  conditionalizing the sources (for byte-swapped clients).
 
-* Thu Nov 01 2018 Adam Jackson <ajax@redhat.com> - 1.20.3-1
-- xserver 1.20.3
+* Fri Jan 13 2023 Leif Liddy <leifliddy@fedoraproject.org> 1.20.14-15
+- Xorg server does not correctly select the DCP for the display
+  without a quirk on Apple silicon machines (#2152414)
 
-* Mon Oct 15 2018 Adam Jackson <ajax@redhat.com> - 1.20.2-1
-- xserver 1.20.2
+* Fri Jan 13 2023 Peter Hutterer <peter.hutterer@redhat.com> - 1.20.14-14
+- Disallow byte-swapped clients (#2159489)
 
-* Thu Oct  4 2018 Hans de Goede <hdegoede@redhat.com> - 1.20.1-4
-- Rebase patch to use va_gl as vdpau driver on i965 GPUs, re-fix rhbz#1413733
+* Wed Jan 11 2023 Olivier Fourdan <ofourdan@redhat.com> - 1.20.14-13
+- Rename boolean config value field from bool to boolean to fix drivers
+  build failures due to a conflict with C++ and stdbool.h
 
-* Thu Sep 13 2018 Dave Airlie <airlied@redhat.com> - 1.20.1-3
-- Build with PIE enabled (this doesn't enable bind now)
+* Mon Dec 19 2022 Peter Hutterer <peter.hutterer@redhat.com> - 1.20.14-12
+- Fix buggy patch to CVE-2022-46340
 
-* Mon Sep 10 2018 Olivier Fourdan <ofourdan@redhat.com> - 1.20.1-2
-- Include patches from upstream to fix Xwayland crashes
+* Wed Dec 14 2022 Peter Hutterer <peter.hutterer@redhat.com> 1.20.14-11
+- CVE fix for: CVE-2022-4283, CVE-2022-46340, CVE-2022-46341,
+  CVE-2022-46342, CVE-2022-46343, CVE-2022-46344
 
-* Thu Aug 09 2018 Adam Jackson <ajax@redhat.com> - 1.20.1-1
-- xserver 1.20.1
+* Wed Nov 23 2022 Peter Hutterer <peter.hutterer@redhat.com> - 1.20.14-10
+- Drop dependency on xorg-x11-font-utils, it was only there for on
+  build-time variable that's always the same value anyway (#2145088)
 
-* Sat Jul 14 2018 Fedora Release Engineering <releng@fedoraproject.org> - 1.20.0-5
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+* Tue Nov  8 2022 Olivier Fourdan <ofourdan@redhat.com> - 1.20.14-9
+- Fix CVE-2022-3550, CVE-2022-3551
 
-* Tue Jun 12 2018 Adam Jackson <ajax@redhat.com> - 1.20.0-4
-- Xorg and Xwayland Requires: libEGL
+* Sat Jul 23 2022 Fedora Release Engineering <releng@fedoraproject.org> - 1.20.14-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
 
-* Fri Jun 01 2018 Adam Williamson <awilliam@redhat.com> - 1.20.0-3
-- Backport fixes for RHBZ#1579067
+* Tue Jul 12 2022 Olivier Fourdan <ofourdan@redhat.com> - 1.20.14-7
+- Fix CVE-2022-2319/ZDI-CAN-16062, CVE-2022-2320/ZDI-CAN-16070
 
-* Wed May 16 2018 Adam Jackson <ajax@redhat.com> - 1.20.0-2
-- Xorg Requires: xorg-x11-drv-libinput
+* Wed Apr 13 2022 Dominik Mierzejewski <rpm@greysector.net> - 1.20.14-6
+- Don't hardcode fps for fake screen (#2054188)
 
-* Thu May 10 2018 Adam Jackson <ajax@redhat.com> - 1.20.0-1
-- xserver 1.20
+* Fri Apr 8 2022 Jocelyn Falempe <jfalempe@redhat.com> - 1.20.14-5
+- Fix basic graphic mode not working with simpledrm (#2067151)
 
-* Wed Apr 25 2018 Adam Jackson <ajax@redhat.com> - 1.19.99.905-2
-- Fix xvfb-run's default depth to be 24
+* Fri Jan 28 2022 Olivier Fourdan <ofourdan@redhat.com> - 1.20.14-4
+- Fix build with GCC 12 (#2047134)
 
-* Tue Apr 24 2018 Adam Jackson <ajax@redhat.com> - 1.19.99.905-1
-- xserver 1.20 RC5
+* Tue Jan 25 2022 Olivier Fourdan <ofourdan@redhat.com> - 1.20.14-3
+- Fix crash with NVIDIA proprietary driver with Present (#2046147)
 
-* Thu Apr 12 2018 Olivier Fourdan <ofourdan@redhat.com> - 1.19.99.904-2
-- Re-fix "use type instead of which in xvfb-run (rhbz#1443357)" which
-  was overridden inadvertently
-
-* Tue Apr 10 2018 Adam Jackson <ajax@redhat.com> - 1.19.99.904-1
-- xserver 1.20 RC4
-
-* Mon Apr 02 2018 Adam Jackson <ajax@redhat.com> - 1.19.99.903-1
-- xserver 1.20 RC3
-
-* Tue Feb 13 2018 Olivier Fourdan <ofourdan@redhat.com> 1.19.6-5
-- xwayland: avoid race condition on new keymap
-- xwayland: Keep separate variables for pointer and tablet foci (rhbz#1519961)
-- xvfb-run now support command line option “--auto-display”
-
-* Fri Feb 09 2018 Fedora Release Engineering <releng@fedoraproject.org> - 1.19.6-4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
-
-* Tue Jan 30 2018 Olivier Fourdan <ofourdan@redhat.com> 1.19.6-3
-- Avoid generating a core file when the Wayland compositor is gone.
-
-* Thu Jan 11 2018 Peter Hutterer <peter.hutterer@redhat.com> 1.19.6-2
-- Fix handling of devices with ID_INPUT=null
-
-* Wed Dec 20 2017 Adam Jackson <ajax@redhat.com> - 1.19.6-1
-- xserver 1.19.6
-
-* Thu Oct 12 2017 Adam Jackson <ajax@redhat.com> - 1.19.5-1
-- xserver 1.19.5
-
-* Thu Oct 05 2017 Olivier Fourdan <ofourdan@redhat.com> - 1.19.4-1
-- xserver-1.19.4
-- Backport tablet support for Xwayland
-
-* Fri Sep 08 2017 Troy Dawson <tdawson@redhat.com> - 1.19.3-9
-- Cleanup spec file conditionals
-
-* Thu Aug 03 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1.19.3-8
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
-
-* Thu Jul 27 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1.19.3-7
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
-
-* Sun Jul  2 2017 Ville Skyttä <ville.skytta@iki.fi> - 1.19.3-6
-- Use type instead of which in xvfb-run (rhbz#1443357)
-
-* Thu May 04 2017 Orion Poplawski <orion@cora.nwra.com> - 1.19.3-5
-- Enable full build for s390/x
-
-* Mon Apr 24 2017 Ben Skeggs <bskeggs@redhat.com> - 1.19.3-4
-- Default to xf86-video-modesetting on GeForce 8 and newer
-
-* Fri Apr 07 2017 Adam Jackson <ajax@redhat.com> - 1.19.3-3
-- Inoculate against a versioning bug with libdrm 2.4.78
-
-* Thu Mar 23 2017 Hans de Goede <hdegoede@redhat.com> - 1.19.3-2
-- Use va_gl as vdpau driver on i965 GPUs (rhbz#1413733)
-
-* Wed Mar 15 2017 Adam Jackson <ajax@redhat.com> - 1.19.3-1
-- xserver 1.19.3
-
-* Thu Mar 02 2017 Adam Jackson <ajax@redhat.com> - 1.19.2-1
-- xserver 1.19.2
-
-* Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1.19.1-4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
-
-* Wed Feb 01 2017 Peter Hutterer <peter.hutterer@redhat.com> 1.19.1-3
-- Fix a few input thread lock issues causing intel crashes (#1384486)
-
-* Mon Jan 16 2017 Adam Jackson <ajax@redhat.com> - 1.19.1-2
-- Limit the intel driver only on F26 and up
-
-* Wed Jan 11 2017 Adam Jackson <ajax@redhat.com> - 1.19.1-1
-- xserver 1.19.1
-
-* Tue Jan 10 2017 Hans de Goede <hdegoede@redhat.com> - 1.19.0-4
-- Follow Debian and only default to the intel ddx on gen4 or older intel GPUs
-
-* Tue Dec 20 2016 Hans de Goede <hdegoede@redhat.com> - 1.19.0-3
-- Add one more patch for better integration with the nvidia binary driver
-
-* Thu Dec 15 2016 Hans de Goede <hdegoede@redhat.com> - 1.19.0-2
-- Add some patches for better integration with the nvidia binary driver
-- Add a patch from upstream fixing a crash (rhbz#1389886)
-
-* Wed Nov 23 2016 Olivier Fourdan <ofourdan@redhat.com> 1.19.0-1
-- xserver 1.19.0
-- Fix use after free of cursors in Xwayland (rhbz#1385258)
-- Fix an issue where some monitors would show only black, or
-  partially black when secondary GPU outputs are used
-
-* Tue Nov 15 2016 Peter Hutterer <peter.hutterer@redhat.com> 1.19.0-0.8.rc2
-- Update device barriers for new master devices (#1384432)
-
-* Thu Nov  3 2016 Hans de Goede <hdegoede@redhat.com> - 1.19.0-0.7.rc2
-- Update to 1.19.0-rc2
-- Fix (hopefully) various crashes in FlushAllOutput() (rhbz#1382444)
-- Fix Xwayland crashing in glamor on non glamor capable hw (rhbz#1390018)
-
-* Tue Nov  1 2016 Ben Crocker <bcrocker@redhat.com> - 1.19.0-0.6.20161028
-- Fix Config record allocation during startup: if xorg.conf.d directory
-- was absent, a segfault resulted.
-
-* Mon Oct 31 2016 Adam Jackson <ajax@redhat.com> - 1.19.0-0.5.20161026
-- Use %%autopatch instead of doing our own custom git-am trick
-
-* Fri Oct 28 2016 Hans de Goede <hdegoede@redhat.com> - 1.19.0-0.4.20161026
-- Add missing Requires: libXfont2-devel to -devel sub-package (rhbz#1389711)
-
-* Wed Oct 26 2016 Hans de Goede <hdegoede@redhat.com> - 1.19.0-0.3.20161026
-- Sync with upstream git, bringing in a bunch if bug-fixes
-- Add some extra fixes which are pending upstream
-- This also adds PointerWarping emulation to Xwayland, which should improve
-  compatiblity with many games
+* Sat Jan 22 2022 Fedora Release Engineering <releng@fedoraproject.org> - 1.20.14-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild

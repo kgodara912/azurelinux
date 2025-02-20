@@ -1,0 +1,48 @@
+From 145e7f4aa9d9cf400751a16768b077b533f428cc Mon Sep 17 00:00:00 2001
+From: tbordaz <tbordaz@redhat.com>
+Date: Wed, 9 Oct 2024 15:20:48 +0200
+Subject: [PATCH] Issue 6356 - On LMDB, after an update the impact VLV index,
+ the vlv recno cache is not systematically cleared (#6357)
+
+Bug description:
+	The VLV manages/uses an index database.
+	In LMDB in addition to the index there is one 'recno cache' database per VLV index.
+	This recno cache, related to a given VLV index, is cleared when an update impacts the VLV index.
+	The recno cache is not systematically cleared upon update of the VLV index.
+
+	The way to clear the cache is to delete the record with key "OK".
+	When the 'recno cache' does not contain this key, the next
+	lookup to the cache, clears all entries and rebuild the cache
+	from the vlv index.
+	The deletion is done with mdb_del with both KEY and DATA
+	refering to the same mdb_val. This means it deletes the records
+	matching if both KEY/DATA.
+	It should not match the DATA as the "OK" record is just
+	a flag and all entries with that key should be removed.
+
+Fix description:
+	The fix consist to call mdb_del only with key
+
+fixes: #6356
+
+Reviewed by: Pierre Rogier (Thanks!!)
+---
+ ldap/servers/slapd/back-ldbm/db-mdb/mdb_layer.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/ldap/servers/slapd/back-ldbm/db-mdb/mdb_layer.c b/ldap/servers/slapd/back-ldbm/db-mdb/mdb_layer.c
+index 9c2db199c..313eb35ae 100644
+--- a/ldap/servers/slapd/back-ldbm/db-mdb/mdb_layer.c
++++ b/ldap/servers/slapd/back-ldbm/db-mdb/mdb_layer.c
+@@ -2882,7 +2882,7 @@ dbmdb_public_clear_vlv_cache(Slapi_Backend *be, dbi_txn_t *txn, dbi_db_t *db)
+     ok.mv_size = 2;
+     rc = dbmdb_open_dbi_from_filename(&rcdbi, be, rcdbname, NULL, 0);
+     if (rc == 0) {
+-        rc = MDB_DEL(TXN(txn), rcdbi->dbi, &ok, &ok);
++        rc = MDB_DEL(TXN(txn), rcdbi->dbi, &ok, NULL);
+     }
+     slapi_ch_free_string(&rcdbname);
+     return rc;
+-- 
+2.46.0
+

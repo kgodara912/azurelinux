@@ -1,0 +1,58 @@
+From 46d1422902e1c66b31fae79be7dca79ff8b2e81b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?David=20Rodr=C3=ADguez?= <deivid.rodriguez@riseup.net>
+Date: Wed, 15 Jun 2022 19:35:27 +0200
+Subject: [PATCH] Reimplement did_you_mean suggestions to keep behaviour
+ accross rubies
+
+Ruby 3.2 will introduce `Exception#detailed_message` and `did_you_mean`
+has been already updated in Ruby 3.2 to use that.
+
+The new behaviour means not changing the original `Exception#message`.
+That means it is hard to get the previous error output, because
+`Exception#detailed_message` includes not only `did_you_mean`
+decorations, but also additional information like the exception class.
+
+To fix this, I bring the old did_you_mean behavior into Thor, so that
+the above changes do not affect us.
+---
+ lib/thor/error.rb | 22 +++++++++-------------
+ 1 file changed, 9 insertions(+), 13 deletions(-)
+
+diff --git a/lib/thor/error.rb b/lib/thor/error.rb
+index 893b135e..cc3dfe41 100644
+--- a/lib/thor/error.rb
++++ b/lib/thor/error.rb
+@@ -11,7 +11,15 @@ def initialize(dictionary)
+                     end
+                   end
+ 
+-                  DidYouMean::Correctable
++                  Module.new do
++                    def to_s
++                      super + DidYouMean.formatter.message_for(corrections)
++                    end
++
++                    def corrections
++                      @corrections ||= self.class.const_get(:SpellChecker).new(self).corrections
++                    end
++                  end
+                 end
+ 
+   # Thor::Error is raised when it's caused by wrong usage of thor classes. Those
+@@ -100,16 +108,4 @@ class RequiredArgumentMissingError < InvocationError
+ 
+   class MalformattedArgumentError < InvocationError
+   end
+-
+-  if Correctable
+-    if DidYouMean.respond_to?(:correct_error)
+-      DidYouMean.correct_error(Thor::UndefinedCommandError, UndefinedCommandError::SpellChecker)
+-      DidYouMean.correct_error(Thor::UnknownArgumentError, UnknownArgumentError::SpellChecker)
+-    else
+-      DidYouMean::SPELL_CHECKERS.merge!(
+-        'Thor::UndefinedCommandError' => UndefinedCommandError::SpellChecker,
+-        'Thor::UnknownArgumentError' => UnknownArgumentError::SpellChecker
+-      )
+-    end
+-  end
+ end

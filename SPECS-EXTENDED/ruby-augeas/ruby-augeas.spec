@@ -1,37 +1,38 @@
-Summary:        Ruby bindings for Augeas
 Name:           ruby-augeas
 Version:        0.5.0
-Release:        30%{?dist}
+Release:        39%{?dist}
+Summary:        Ruby bindings for Augeas
+
 License:        LGPLv2+
-Vendor:         Microsoft Corporation
-Distribution:   Azure Linux
-URL:            https://augeas.net
-Source0:        http://download.augeas.net/ruby/%{name}-%{version}.tgz
+URL:            http://augeas.net
+Source0:        http://download.augeas.net/ruby/ruby-augeas-%{version}.tgz
 
-BuildRequires:  augeas-devel >= 1.0.0
-BuildRequires:  gcc
-BuildRequires:  pkg-config
-BuildRequires:  ruby
+# Backport of https://github.com/hercules-team/ruby-augeas/pull/17
+Patch:          remove-unused-sibling-argument-from-augeas_rm.patch
+
+BuildRequires:  ruby rubygem(rake) rubygem(test-unit)
+BuildRequires:  ruby rubygem(rdoc)
 BuildRequires:  ruby-devel
-BuildRequires:  rubygem(rake)
-BuildRequires:  rubygem(test-unit)
-
-Requires:       augeas-libs >= 1.0.0
+BuildRequires:  augeas-devel >= 1.0.0
+BuildRequires:  pkgconfig
+BuildRequires:  gcc
 Requires:       ruby(release)
-
+Requires:       augeas-libs >= 1.0.0
 Provides:       ruby(augeas) = %{version}
 
 %description
 Ruby bindings for augeas.
 
 %prep
-%setup -q
+%autosetup -p1
+
 
 %build
 export CONFIGURE_ARGS="--with-cflags='%{optflags}'"
 rake build
 
 %install
+rm -rf %{buildroot}
 install -d -m0755 %{buildroot}%{ruby_vendorlibdir}
 install -d -m0755 %{buildroot}%{ruby_vendorarchdir}
 install -p -m0644 lib/augeas.rb %{buildroot}%{ruby_vendorlibdir}
@@ -40,20 +41,46 @@ install -p -m0755 ext/augeas/_augeas.so %{buildroot}%{ruby_vendorarchdir}
 %check
 ruby tests/tc_augeas.rb
 
+
 %files
-%license COPYING
-%doc README.rdoc NEWS
+%doc COPYING README.rdoc NEWS
 %{ruby_vendorlibdir}/augeas.rb
 %{ruby_vendorarchdir}/_augeas.so
 
-%changelog
-* Wed Jun 08 2022 Pawel Winogrodzki <pawelwi@microsoft.com> - 0.5.0-30
-- Adding missed BR on 'rubygem(rake)'.
-- Fixed source URL.
 
-* Thu Dec 30 2021 Suresh Babu Chalamalasetty <schalam@microsoft.com> - 0.5.0-29
-- Initial CBL-Mariner import from Fedora 35 (license: MIT)
-- License verified
+%changelog
+* Fri Jul 19 2024 Fedora Release Engineering <releng@fedoraproject.org> - 0.5.0-39
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
+
+* Wed Jan 31 2024 Ewoud Kohl van Wijngaarden <ewoud@kohlvanwijngaarden.nl> - 0.5.0-38
+- Correct method definition of augeas_rm (fixes rhbz#2261659)
+
+* Fri Jan 26 2024 Fedora Release Engineering <releng@fedoraproject.org> - 0.5.0-37
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Mon Jan 22 2024 Fedora Release Engineering <releng@fedoraproject.org> - 0.5.0-36
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Wed Jan 03 2024 Mamoru TASAKA <mtasaka@fedoraproject.org> - 0.5.0-35
+- Rebuild for https://fedoraproject.org/wiki/Changes/Ruby_3.3
+
+* Fri Jul 21 2023 Fedora Release Engineering <releng@fedoraproject.org> - 0.5.0-34
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Fri Jan 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 0.5.0-33
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
+* Wed Jan 04 2023 Mamoru TASAKA <mtasaka@fedoraproject.org> - 0.5.0-32
+- Rebuild for https://fedoraproject.org/wiki/Changes/Ruby_3.2
+
+* Sat Jul 23 2022 Fedora Release Engineering <releng@fedoraproject.org> - 0.5.0-31
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Thu Jan 27 2022 Mamoru TASAKA <mtasaka@fedoraproject.org> - 0.5.0-30
+- F-36: rebuild against ruby31
+
+* Fri Jan 21 2022 Fedora Release Engineering <releng@fedoraproject.org> - 0.5.0-29
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
 
 * Fri Jul 23 2021 Fedora Release Engineering <releng@fedoraproject.org> - 0.5.0-28
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild

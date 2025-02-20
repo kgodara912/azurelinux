@@ -1,0 +1,43 @@
+From 3da3b44afdf2fa0bd618b87c5d862e9def1d5f4f Mon Sep 17 00:00:00 2001
+From: Tim Diggins <tim@red56.uk>
+Date: Fri, 4 Mar 2022 11:25:44 +0000
+Subject: [PATCH] First fix CI so it's green (see #780, #781)
+
+fix options spec.
+
+allow line_editor spec to be run independently
+
+running `rspec spec/line_editor_spec.rb` generated a double error
+when it tries to re require "readline"
+
+fix expectations for ruby 3 treatment of hash arg
+
+try coveralls_reborn to fix ssl errors.
+
+Note that we could also use the coveralls action as recommended
+in https://github.com/tagliala/coveralls-ruby-reborn
+but it seems like a github token is needed, which makes
+it more complex for contributors
+
+This does mean dropping coveralls for EOLed rubies but
+do we really need to post to coveralls on each test run?
+Wouldn't one test run be enough?
+---
+ spec/parser/options_spec.rb      |  4 +++-
+ 1 file changed, 3 insertions(+), 1 deletions(-)
+
+diff --git a/spec/parser/options_spec.rb b/spec/parser/options_spec.rb
+index b1e50fbf..5caf9f67 100644
+--- a/spec/parser/options_spec.rb
++++ b/spec/parser/options_spec.rb
+@@ -116,7 +116,9 @@ def remaining
+       expected = "Unknown switches \"--baz\""
+       expected << "\nDid you mean?  \"--bar\"" if Thor::Correctable
+ 
+-      expect { check_unknown! }.to raise_error(Thor::UnknownArgumentError, expected)
++      expect { check_unknown! }.to raise_error(Thor::UnknownArgumentError) do |error|
++        expect(error.to_s).to eq(expected)
++      end
+     end
+ 
+     it "skips leading non-switches" do

@@ -1,27 +1,33 @@
-Vendor:         Microsoft Corporation
-Distribution:   Azure Linux
+%global giturl https://github.com/openlink/iODBC
 
 ## admin gui build currently busted, FIXME?
 #define _enable_gui --enable-gui
 
 Summary: iODBC Driver Manager
 Name: libiodbc
-Version: 3.52.13
-Release: 4%{?dist}
-License: LGPLv2 or BSD
+Version: 3.52.16
+Release: 1%{?dist}
+License: LGPL-2.0-only OR BSD-3-Clause
 URL: http://www.iodbc.org/
-Source0: https://github.com/openlink/iODBC/archive/v%{version}/%{name}-%{version}.tar.gz
+VCS: git:%{giturl}.git
+Source0: %{giturl}/archive/v%{version}/%{name}-%{version}.tar.gz
 
 ## upstream patches
 
 ## downstream patches
 Patch100: libiodbc-3.52.12-multilib.patch
+# Fix LTO type mismatches
+# https://github.com/openlink/iODBC/issues/107
+# https://github.com/openlink/iODBC/issues/108
+Patch101: libiodbc-3.52.16-lto.patch
+# Fix FTBFS due to a type mismatch in unicode.c
+Patch102: libiodbc-3.52.16-unicode.patch
 
 %{?_enable_gui:BuildRequires: gtk2-devel}
 BuildRequires: gcc
-BuildRequires: chrpath
 # Needed for autogen.sh
 BuildRequires: libtool
+BuildRequires: make
 
 %description
 The iODBC Driver Manager is a free implementation of the SAG CLI and
@@ -54,15 +60,25 @@ chmod -x include/*.h
 %build
 # github tarball does not ship configure
 ./autogen.sh
+# The code is not ready for C23 mode
+export CFLAGS='%{build_cflags} -std=gnu17'
 # --disable-libodbc to minimize conflicts with unixODBC
 %configure \
   --enable-odbc3 \
   --with-iodbc-inidir=%{_sysconfdir} \
+  --with-layout=RedHat \
   --enable-pthreads \
   --disable-libodbc \
   --disable-static \
   --includedir=%{_includedir}/libiodbc \
   %{?_enable_gui} %{!?_enable_gui:--disable-gui}
+
+# Get rid of undesirable hardcoded rpaths; workaround libtool reordering
+# -Wl,--as-needed after all the libraries.
+sed -e 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' \
+    -e 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' \
+    -e 's|CC="\(.*g..\)"|CC="\1 -Wl,--as-needed"|' \
+    -i libtool
 
 %make_build
 
@@ -70,16 +86,10 @@ chmod -x include/*.h
 %install
 %make_install
 
-# nuke rpaths
-chrpath --delete %{buildroot}%{_bindir}/iodbctest
-chrpath --delete %{buildroot}%{_bindir}/iodbctestw
-
 # unpackaged files
 rm -fv %{buildroot}%{_libdir}/lib*.la
 rm -rfv %{buildroot}%{_datadir}/libiodbc/samples
 
-
-%ldconfig_scriptlets
 
 %files 
 %doc AUTHORS ChangeLog README
@@ -110,12 +120,53 @@ rm -rfv %{buildroot}%{_datadir}/libiodbc/samples
 
 
 %changelog
-* Fri Apr 29 2022 Pawel Winogrodzki <pawelwi@microsoft.com> - 3.52.13-4
-- Updating source URL.
-- License verified.
+* Wed Jan 15 2025 Jerry James <loganjerry@gmail.com> - 3.52.16-1
+- Version 3.52.16
+- Reevaluate License field
+- Add patch to fix LTO type mismatches
+- Add patch to fix FTBFS due to a type mismatch in unicode.c
+- Build in C17 mode; the code is not ready for C23
+- Avoid rpaths instead of removing them afterwards
+- Minor spec file cleanups
 
-* Fri Oct 15 2021 Pawel Winogrodzki <pawelwi@microsoft.com> - 3.52.13-3
-- Initial CBL-Mariner import from Fedora 32 (license: MIT).
+* Mon Sep 02 2024 Miroslav Suchý <msuchy@redhat.com> - 3.52.15-8
+- convert license to SPDX
+
+* Thu Jul 18 2024 Fedora Release Engineering <releng@fedoraproject.org> - 3.52.15-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
+
+* Thu Jan 25 2024 Fedora Release Engineering <releng@fedoraproject.org> - 3.52.15-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Sun Jan 21 2024 Fedora Release Engineering <releng@fedoraproject.org> - 3.52.15-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 3.52.15-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Thu Jan 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 3.52.15-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
+* Thu Jul 21 2022 Fedora Release Engineering <releng@fedoraproject.org> - 3.52.15-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Wed Jun 01 2022 Rex Dieter <rdieter@fedoraproject.org> - 3.52.15-1
+- 3.52.15
+
+* Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 3.52.13-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
+* Thu Jul 22 2021 Fedora Release Engineering <releng@fedoraproject.org> - 3.52.13-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
+* Tue Jan 26 2021 Fedora Release Engineering <releng@fedoraproject.org> - 3.52.13-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
+
+* Tue Jul 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.52.13-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
+* Tue Jun 30 2020 Jeff Law <law@redhat.com> - 3.52.13-3
+- Ignore annobin symbols in configure test
 
 * Wed Jan 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.52.13-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild

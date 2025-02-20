@@ -1,24 +1,12 @@
-Vendor:         Microsoft Corporation
-Distribution:   Azure Linux
 Name:    lksctp-tools
 Summary: User-space access to Linux Kernel SCTP
-Version: 1.0.18
-Release: 6%{?dist}
-# src/apps/bindx_test.C is GPLv2, I've asked upstream for clarification
-License: GPLv2 and LGPLv2+
+Version: 1.0.20
+Release: 1%{?dist}
+License: GPL-2.0-or-later AND LGPL-2.0-only AND MIT
 Group:   System Environment/Libraries
-URL:     http://lksctp.sourceforge.net
+URL:     https://github.com/sctp/lksctp-tools/wiki
 
 Source0: https://github.com/sctp/lksctp-tools/archive/%{name}-%{version}.tar.gz
-Patch0: lksctp-tools-1.0.16-libdir.patch
-Patch1: lksctp-tools-1.0.18-withsctp-use-PACKAGE_VERSION-in-withsctp.h.patch
-Patch2: lksctp-tools-1.0.18-configure.ac-add-CURRENT-REVISION-and-AGE-for-libsct.patch
-Patch3: lksctp-tools-1.0.18-build-fix-netinet-sctp.h-not-to-be-installed.patch
-Patch4: lksctp-tools-1.0.18-build-remove-v4.12-secondary-defines-in-favor-of-HAV.patch
-Patch5: lksctp-tools-1.0.18-build-fix-probing-for-HAVE_SCTP_SENDV.patch
-Patch6: lksctp-tools-1.0.18-build-0b0dce7a36fb-actually-belongs-to-v4.19.patch
-Patch7: lksctp-tools-symver.patch
-Patch8: lksctp-tools-1.0.18-autoconf_2_70.patch
 BuildRequires: libtool, automake, autoconf, make
 
 %description
@@ -53,15 +41,6 @@ Drafts).
 
 %prep
 %setup -q -n %{name}-%{name}-%{version}
-%patch 0 -p1
-%patch 1 -p1
-%patch 2 -p1
-%patch 3 -p1
-%patch 4 -p1
-%patch 5 -p1
-%patch 6 -p1
-%patch 7 -p1
-%patch 8 -p1
 
 %build
 [ ! -x ./configure ] && sh bootstrap
@@ -78,11 +57,8 @@ rm -f doc/rfc2960.txt doc/states.txt
 
 find $RPM_BUILD_ROOT -type f -name "*.la" -delete
 
-%ldconfig_scriptlets
-
 %files
-%license COPYING*
-%doc AUTHORS ChangeLog README
+%doc AUTHORS ChangeLog COPYING* README
 %{_bindir}/*
 %{_libdir}/libsctp.so.1*
 %dir %{_libdir}/lksctp-tools/
@@ -101,12 +77,62 @@ find $RPM_BUILD_ROOT -type f -name "*.la" -delete
 %doc doc/*.txt
 
 %changelog
-* Tue Mar 15 2022 Pawel Winogrodzki <pawelwi@microsoft.com> - 1.0.18-6
-- License verified.
-- Applying patch for "autoconf" version 2.70+. Using Fedora 36 spec (license: MIT) for guidance.
+* Sun Sep 15 2024 Peter Hanecak <hany@hany.sk> - 1.0.20-1
+- Updated to 1.0.20
+- Update URL
+- Dropped patches which were incorporated into the upstream
 
-* Fri Oct 15 2021 Pawel Winogrodzki <pawelwi@microsoft.com> - 1.0.18-5
-- Initial CBL-Mariner import from Fedora 32 (license: MIT).
+* Thu Jul 18 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.19-9
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
+
+* Mon Feb 26 2024 Xin Long <lxin@redhat.com> - 1.0.19-8
+- man doc update and one fix for lib and another for sctp_test
+
+* Fri Jan 26 2024 Xin Long <lxin@redhat.com> - 1.0.19-7
+- Use SDPX license IDs
+
+* Thu Jan 25 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.19-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Sun Jan 21 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.19-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.19-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Thu Jan 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.19-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
+* Thu Jul 21 2022 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.19-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Sun Jun  5 2022 Peter Hanecak <hany@hany.sk> - 1.0.19-1
+- Updated to 1.0.19
+- Patches dropped since changes are now incorporated in the upstream
+
+* Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.18-12
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
+* Thu Jul 22 2021 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.18-11
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
+* Sat Apr 17 2021 Peter Hanecak <hany@hany.sk> - 1.0.18-10
+- Added autoconf-2.70 fix from upstream
+
+* Tue Jan 26 2021 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.18-9
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
+
+* Wed Sep 09 2020 Jeff Law <law@redhat.com> - 1.0.18-8
+- Use symver attribute for symbol versioning.  Re-enable LTO
+
+* Wed Aug 19 2020 Igor Raits <ignatenkobrain@fedoraproject.org> - 1.0.18-7
+- Drop useless ldconfig scriptlets
+
+* Tue Jul 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.18-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
+* Wed Jul 01 2020 Jeff Law <law@redhat.com> - 1.0.18-5
+- Disable LTO
 
 * Wed Jan 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.18-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild

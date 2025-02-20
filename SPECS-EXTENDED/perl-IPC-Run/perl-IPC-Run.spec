@@ -1,17 +1,18 @@
+# Perform optional tests
+%bcond_without perl_IPC_Run_enables_optional_test
+
 Name:           perl-IPC-Run
-Version:        20180523.0
-Release:        8%{?dist}
+Version:        20231003.0
+Release:        4%{?dist}
 Summary:        Perl module for interacting with child processes
 # the rest:                     GPL+ or Artistic
 # The Win32* modules are not part of the binary RPM package
 # lib/IPC/Run/Win32Helper.pm:   GPLv2 or Artistic
 # lib/IPC/Run/Win32Pump.pm:     GPLv2 or Artistic
 # lib/IPC/Run/Win32IO.pm:       GPLv2 or Artistic
-License:        GPL+ or Artistic
-Vendor:         Microsoft Corporation
-Distribution:   Azure Linux
+License:        GPL-1.0-or-later OR Artistic-1.0-Perl
 URL:            https://metacpan.org/release/IPC-Run
-Source0:        https://cpan.metacpan.org/authors/id/T/TO/TODDR/IPC-Run-%{version}.tar.gz#/perl-IPC-Run-%{version}.tar.gz
+Source0:        https://cpan.metacpan.org/modules/by-module/IPC/IPC-Run-%{version}.tar.gz
 BuildArch:      noarch
 # Build
 BuildRequires:  coreutils
@@ -36,21 +37,27 @@ BuildRequires:  perl(File::Spec)
 BuildRequires:  perl(IO::Handle)
 BuildRequires:  perl(IO::Pty) >= 1.08
 BuildRequires:  perl(POSIX)
-# Socket not used on Linux
 BuildRequires:  perl(Scalar::Util)
+# Socket not used on Linux
 BuildRequires:  perl(strict)
 BuildRequires:  perl(Symbol)
 # Text::ParseWords not used on Linux
 BuildRequires:  perl(vars)
+BuildRequires:  perl(warnings)
 # Win32::Process not used on Linux
 # Win32API::File not used on Linux
 # Tests:
+# B not used on Linux
+BuildRequires:  perl(Cwd)
 BuildRequires:  perl(Encode)
+BuildRequires:  perl(File::Temp)
 BuildRequires:  perl(IO::Tty)
 BuildRequires:  perl(Test::More) >= 0.47
-BuildRequires:  perl(warnings)
+%if %{with perl_IPC_Run_enables_optional_test}
+# Optional Tests
+BuildRequires:  perl(Readonly)
+%endif
 # Runtime
-Requires:       perl(:MODULE_COMPAT_%(eval "`perl -V:version`"; echo $version))
 Requires:       perl(Data::Dumper)
 Requires:       perl(File::Basename)
 Requires:       perl(IO::Pty) >= 1.08
@@ -73,10 +80,11 @@ sed -i -e '/^lib\/IPC\/Run\/Win32.*/d' MANIFEST
 rm -f t/win32_*
 sed -i -e '/^t\/win32_.*/d' MANIFEST
 
-# Fix shellbangs
-for file in eg/run_daemon abuse/timers abuse/blocking_debug_with_sub_coprocess ; do
-    perl -pi -e 's,^#!.*/perl,%{__perl}, if ($. == 1)' "$file"
-done
+# Handle optional tests
+%if !%{with perl_IPC_Run_enables_optional_test}
+rm t/readonly.t
+sed -i -e '/^t/readonly\.t/d' MANIFEST
+%endif
 
 %build
 perl Makefile.PL INSTALLDIRS=vendor
@@ -92,8 +100,7 @@ make test
 
 %files
 %license LICENSE
-%doc Changes README TODO
-%doc abuse/ eg/
+%doc Changelog eg/ README.md
 %{perl_vendorlib}/IPC/
 %{_mandir}/man3/IPC::Run.3*
 %{_mandir}/man3/IPC::Run::Debug.3*
@@ -101,8 +108,90 @@ make test
 %{_mandir}/man3/IPC::Run::Timer.3*
 
 %changelog
-* Fri Oct 15 2021 Pawel Winogrodzki <pawelwi@microsoft.com> - 20180523.0-8
-- Initial CBL-Mariner import from Fedora 32 (license: MIT).
+* Fri Jul 19 2024 Fedora Release Engineering <releng@fedoraproject.org> - 20231003.0-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
+
+* Thu Jan 25 2024 Fedora Release Engineering <releng@fedoraproject.org> - 20231003.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Sun Jan 21 2024 Fedora Release Engineering <releng@fedoraproject.org> - 20231003.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Tue Oct  3 2023 Paul Howarth <paul@city-fan.org> - 20231003.0-1
+- Update to 20231003.0 (rhbz#2241845)
+  - On Windows, avoid hang under IPCRUNDEBUG (GH#157)
+  - Refresh "cpanfile" from Makefile.PL, to allow use on Windows
+  - Normalize shebangs to /usr/bin/perl (GH#163)
+  - Fix or skip all tests recently seen to fail on Windows
+  - Include t/result.t in releases
+  - Make full_result() and result() Windows behavior match non-Windows (GH#168)
+
+* Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 20220807.0-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Tue Apr 18 2023 Michal Josef Špaček <mspacek@redhat.com> - 20220807.0-3
+- Update license to SPDX format
+
+* Fri Jan 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 20220807.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
+* Sun Aug  7 2022 Paul Howarth <paul@city-fan.org> - 20220807.0-1
+- Update to 20220807.0
+  - If your applications rely on portability to Windows, see new documentation
+    sections "argument-passing rules are program-specific" and "batch files"
+    - This release fixes bugs in runs of Windows programs that use standard
+      command line parsing rules
+    - Runs of non-standard programs may require changes; notable non-standard
+      programs include cmd.exe, cscript.exe, and Cygwin programs
+  - Skip t/pty.t test on NetBSD too (GH#140)
+  - Add strict/warnings
+  - Follow Windows argument quoting rules (GH#142)
+  - Allow win32_newlines.t to actually run (GH#146)
+  - Make t/pty.t test pass on OpenBSD (GH#150)
+  - Support Win32 commands having non-standard command line parsing rules
+    (GH#148)
+  - Support executing Win32 batch files
+  - Add IPC::Run::Win32Process, for delivering non-standard command lines
+  - Fix reporting of Win32::Process::Create() errors
+  - On Windows, avoid hang when closing read end of pipe (GH#156)
+  - Ignore known test failure on msys - t/windows_search_path.t (GH#155)
+  - Avoid warning with IPCRUNDEBUG, in Windows spawned children
+  - Use $^X, not 'perl', in tests
+  - Thanks to the new active developer: Noah Misch!
+
+* Fri Jul 22 2022 Fedora Release Engineering <releng@fedoraproject.org> - 20200505.0-9
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Wed Jun 01 2022 Jitka Plesnikova <jplesnik@redhat.com> - 20200505.0-8
+- Perl 5.36 rebuild
+
+* Fri Jan 21 2022 Fedora Release Engineering <releng@fedoraproject.org> - 20200505.0-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
+* Thu Jul 22 2021 Fedora Release Engineering <releng@fedoraproject.org> - 20200505.0-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
+* Fri May 21 2021 Jitka Plesnikova <jplesnik@redhat.com> - 20200505.0-5
+- Perl 5.34 rebuild
+
+* Wed Jan 27 2021 Fedora Release Engineering <releng@fedoraproject.org> - 20200505.0-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
+
+* Tue Jul 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 20200505.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
+* Tue Jun 23 2020 Jitka Plesnikova <jplesnik@redhat.com> - 20200505.0-2
+- Perl 5.32 rebuild
+
+* Wed May  6 2020 Paul Howarth <paul@city-fan.org> - 20200505.0-1
+- Update to 20200505.0
+  - Fix syntax errors in POD examples (GH#125)
+  - Switch Readonly testing requirement to a recommends (GH#127)
+  - Fix full_result to always return $? (GH#129)
+  - kill_kill: Immediately KILL the child process as documented for Win32 (GH#136)
+  - Switch to GitHub actions for CI testing
+  - Re-structure shipped files into eg/
+  - Move author tests into xt/ and test them separately
 
 * Thu Jan 30 2020 Fedora Release Engineering <releng@fedoraproject.org> - 20180523.0-7
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild

@@ -1,0 +1,26 @@
+From baab4ea4c11fe1dce3d26c73da45ade517c0ff8e Mon Sep 17 00:00:00 2001
+From: "Eduardo Lima (Etrunko)" <eblima@gmail.com>
+Date: Mon, 13 Jan 2025 14:15:58 -0300
+Subject: [PATCH] tests: Workaround libproxy bug
+
+https://github.com/libproxy/libproxy/issues/260
+https://github.com/gentoo/gentoo/commit/7a49e97ae0a06dd1c6f9cc798794f6f432174bf6
+
+Signed-off-by: Eduardo Lima (Etrunko) <eblima@gmail.com>
+---
+ tests/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tests/meson.build b/tests/meson.build
+index bddc1a3..d24ca60 100644
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -9,4 +9,4 @@ test_govirt = executable('test-govirt', test_govirt_sources,
+                          dependencies: govirt_lib_dep,
+                          c_args : test_c_args)
+ 
+-test('test-govirt', test_govirt)
++test('test-govirt', test_govirt, env : ['GIO_USE_NETWORK_MONITOR=base'])
+-- 
+2.47.1
+

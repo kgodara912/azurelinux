@@ -1,5 +1,6 @@
 {
  "Signatures": {
-  "thor-1.2.1.tar.gz": "06a3c88920491f8604cb1a47abfbbc4c59c6209ab75ee0932be7bfe4321fd151"
+  "thor-1.2.1-spec.txz": "b8ffadeb4dabd89137f75d1d8c03acc9c6ebb5541558ef574592ec91d2a680ba",
+  "thor-1.2.1.gem": "b1752153dc9c6b8d3fcaa665e9e1a00a3e73f28da5e238b81c404502e539d446"
  }
 }

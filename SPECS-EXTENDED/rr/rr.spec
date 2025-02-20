@@ -4,6 +4,7 @@
 %global commit da33770d22b404d7333e46e26495eaca0c5a6d8a
 %global gittag 5.8.0
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global baserelease 2
 
 ExclusiveArch:  %{ix86} x86_64 aarch64
 
@@ -15,16 +16,13 @@ ExclusiveArch:  %{ix86} x86_64 aarch64
 Summary:        Tool to record and replay execution of applications
 Name:           rr
 Version:        5.8.0
-Release:        2%{?dist}
+Release:        %{baserelease}%{?dist}
 # The entire source code is MIT with the exceptions of
 # files in following directories:
-#   third-party/blake2             CC0
-#   third-party/gdb                BSD
-#   third-party/proc-service       BSD
-#   third-party/zen-pmu-workaround GPLv2
-License:        MIT and CC0 and BSD and GPLv2
-Vendor:         Microsoft Corporation
-Distribution:   Azure Linux
+#   third-party/blake2       CC0
+#   third-party/gdb          BSD
+#   third-party/proc-service BSD
+License:        MIT and CC0 and BSD
 URL:            http://rr-project.org
 
 Source: https://github.com/rr-debugger/rr/archive/%{gittag}/%{name}-%{version}.tar.gz
@@ -126,9 +124,8 @@ patchelf --set-rpath '%{_libdir}/rr/' %{buildroot}%{_libdir}/rr/testsuite/obj/bi
 %license LICENSE
 
 %changelog
-* Fri Jun 14 2024 Henry Beberman <henry.beberman@microsoft.com> - 5.8.0-2
-- Initial Azure Linux import from Fedora 41 (license: MIT).
-- License verified.
+* Fri Jul 19 2024 Fedora Release Engineering <releng@fedoraproject.org> - 5.8.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
 
 * Mon May 20 2024 William Cohen <wcohen@redhat.com> - 5.8.0-1
 - Rebase to rr-5.8.0.

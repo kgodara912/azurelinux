@@ -1,12 +1,11 @@
 Name:           leatherman
-Version:        1.12.6
-Release:        4%{?dist}
+Version:        1.12.13
+Release:        2%{?dist}
 Summary:        Collection of C++ and CMake utility libraries
-Vendor:         Microsoft Corporation
-Distribution:   Azure Linux
+
 # leatherman is ASL 2.0
 # bundled rapidjson is MIT
-License:        ASL 2.0 AND MIT
+License:        Apache-2.0 AND MIT
 URL:            https://github.com/puppetlabs/leatherman
 Source:         %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 
@@ -18,12 +17,9 @@ Patch2:         %{name}-gcc11.patch
 
 BuildRequires:  cmake >= 3.2.2
 BuildRequires:  make
-BuildRequires:  gcc
-BuildRequires:  libgcc
-BuildRequires:  libstdc++
+BuildRequires:  gcc-c++
 BuildRequires:  boost-devel >= 1.73
-BuildRequires:  curl-devel
-BuildRequires:  curl-libs
+BuildRequires:  libcurl-devel
 BuildRequires:  gettext
 BuildRequires:  catch1-devel
 Provides:       bundled(rapidjson) = 1.0.2
@@ -33,12 +29,11 @@ Provides:       bundled(rapidjson) = 1.0.2
 
 %package        devel
 Summary:        Development files for %{name}
-Requires:       %{name} = %{version}-%{release}
+Requires:       %{name}%{?_isa} = %{version}-%{release}
 # Building against leatherman requires the boost nowide headers present
 Requires:       boost-devel
 # Strictly speaking, it is needed only if curl feature is activated
-BuildRequires:  curl-devel
-BuildRequires:  curl-libs
+Requires:       libcurl-devel%{?_isa}
 
 %description    devel
 The %{name}-devel package contains libraries and header files for
@@ -66,9 +61,7 @@ sed -i -e "s/\s*-Werror\s*//g" cmake/cflags.cmake
 %find_lang %{name}_logging
 %find_lang %{name}_locale
 
-%post -p /sbin/ldconfig
-
-%postun -p /sbin/ldconfig
+%ldconfig_scriptlets
 
 %files -f %{name}_logging.lang  -f %{name}_locale.lang
 %license LICENSE
@@ -81,9 +74,59 @@ sed -i -e "s/\s*-Werror\s*//g" cmake/cflags.cmake
 %{_libdir}/cmake/%{name}/
 
 %changelog
-* Tue Oct 19 2021 Suresh Babu Chalamalasetty <schalam@microsoft.com> - 1.12.6-4
-- Initial CBL-Mariner import from Fedora 35 (license: MIT)
-- License verified
+* Thu Jul 18 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.12.13-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
+
+* Wed Apr 10 2024 Gwyn Ciesla <gwync@protonmail.com> - 1.12.13-1
+- 1.12.13
+
+* Mon Feb 26 2024 Gwyn Ciesla <gwync@protonmail.com> - 1.12.12-1
+- 1.12.12
+
+* Thu Jan 25 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.12.11-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Sun Jan 21 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.12.11-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Thu Jan 18 2024 Jonathan Wakely <jwakely@redhat.com> - 1.12.11-2
+- Rebuilt for Boost 1.83
+
+* Tue Oct 24 2023 Gwyn Ciesla <gwync@protonmail.com> - 1.12.11-1
+- 1.12.11
+
+* Tue Oct 17 2023 Gwyn Ciesla <gwync@protonmail.com> - 1.12.10-1
+- 1.12.10
+
+* Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1.12.9-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Sat Mar 04 2023 Gwyn Ciesla <gwync@protonmail.com> - 1.12.9-4
+- migrated to SPDX license
+
+* Mon Feb 20 2023 Jonathan Wakely <jwakely@redhat.com> - 1.12.9-3
+- Rebuilt for Boost 1.81
+
+* Thu Jan 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1.12.9-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
+* Mon Oct 17 2022 Gwyn Ciesla <gwync@protonmail.com> - 1.12.9-1
+- 1.12.9
+
+* Fri Jul 22 2022 Gwyn Ciesla <gwync@protonmail.com> - 1.12.8-1
+- 1.12.8
+
+* Thu Jul 21 2022 Fedora Release Engineering <releng@fedoraproject.org> - 1.12.7-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Wed May 04 2022 Thomas Rodgers <trodgers@redhat.com> - 1.12.7-3
+- Rebuilt for Boost 1.78
+
+* Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 1.12.7-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
+* Wed Jan 19 2022 Gwyn Ciesla <gwync@protonmail.com> - 1.12.7-1
+- 1.12.7
 
 * Fri Aug 06 2021 Jonathan Wakely <jwakely@redhat.com> - 1.12.6-3
 - Rebuilt for Boost 1.76

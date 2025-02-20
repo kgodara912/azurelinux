@@ -1,91 +1,99 @@
-Vendor:         Microsoft Corporation
-Distribution:   Azure Linux
-%global fontname overpass
-%global fontconf 60-%{fontname}.conf
-%global monofontconf 60-%{fontname}-mono.conf
+Version:        3.0.4
+Release:        14%{?dist}
+URL:            https://github.com/RedHatBrand/overpass/
 
-Name:		%{fontname}-fonts
-Version:	3.0.4
-Release:	4%{?dist}
-Summary:	Typeface based on the U.S. interstate highway road signage type system
-License:	OFL or LGPLv2+
-URL:		https://github.com/RedHatBrand/overpass/
-Source0:	https://github.com/RedHatBrand/Overpass/archive/%{version}.tar.gz#/%{name}-%{version}.tar.gz
-Source1:	%{name}-fontconfig.conf
-Source2:	%{fontname}.metainfo.xml
-Source3:	%{fontname}-mono-fonts-fontconfig.conf
-Source4:	%{fontname}-mono.metainfo.xml
+%global         fontlicense     OFL-1.1 or LGPL-2.0-or-later
+%global         fontlicenses    LICENSE.md
+%global         fontdocsex      %{fontlicenses}
 
-BuildArch:	noarch
-BuildRequires:	fontpackages-devel
-Requires:	fontpackages-filesystem
+%global common_description %{expand:
+Free and open source typeface based on the U.S. interstate highway road signage\
+type system.}
 
-%description
-Free and open source typeface based on the U.S. interstate highway road signage
-type system; it is sans-serif and suitable for both body and titling text.
+%global fontfamily0       Overpass
+%global fontsummary0      Typeface based on the U.S. interstate highway road signage type system
+%global fonts0            desktop-fonts/overpass/overpass-*.otf
+%global fontconfs0        %{SOURCE10}
+%global fontdocs0         README.md overpass-specimen.pdf
+%global fontdescription  %{expand:
+%{common_description}
 
-%package -n %{fontname}-mono-fonts
-Summary:	Monospace version of overpass fonts
+This package provide sans-serif fonts which are suitable for both body and \
+titling text.}
 
-%description -n %{fontname}-mono-fonts
-Free and open source typeface based on the U.S. interstate highway road signage
-type system. This is the monospace family variant.
+%global fontfamily1       Overpass Mono
+%global fontsummary1      Monospace version of overpass fonts
+%global fonts1            desktop-fonts/overpass-mono/overpass-*.otf
+%global fontconfs1        %{SOURCE11}
+%global fontdocs1         README.md overpass-mono-specimen.pdf
+%global fontdescription1  %{expand:
+%{common_description}
+
+This package provide monospace version of overpass fonts.}
+
+Source0: https://github.com/RedHatBrand/Overpass/archive/%{version}.tar.gz
+Source10: 60-%{fontpkgname0}.conf
+Source11: 60-%{fontpkgname1}.conf
+
+%fontpkg -a
 
 %prep
-%setup -q -n Overpass-%{version}
+%autosetup -n Overpass-%{version}
 
 %build
-# Nothing to do here.
+%fontbuild -a
 
 %install
-install -m 0755 -d %{buildroot}%{_fontdir}
-
-install -m 0644 -p desktop-fonts/overpass*/*.otf %{buildroot}%{_fontdir}
-
-install -m 0755 -d %{buildroot}%{_fontconfig_templatedir} \
-		%{buildroot}%{_fontconfig_confdir}
-
-install -m 0644 -p %{SOURCE1} \
-		%{buildroot}%{_fontconfig_templatedir}/%{fontconf}
-
-install -m 0644 -p %{SOURCE3} \
-		%{buildroot}%{_fontconfig_templatedir}/%{monofontconf}
-
-ln -s %{_fontconfig_templatedir}/%{fontconf} \
-		%{buildroot}%{_fontconfig_confdir}/%{fontconf}
-
-ln -s %{_fontconfig_templatedir}/%{monofontconf} \
-                %{buildroot}%{_fontconfig_confdir}/%{monofontconf}
-
+%fontinstall -a
 # I do not think this is useful to package, but if it is...
 %if 0
 mkdir -p %{buildroot}/usr/lib/node_modules/overpass/
 cp -a bower.json package.json %{buildroot}/usr/lib/node_modules/overpass/
 %endif
 
-# Add AppStream metadata
-install -Dm 0644 -p %{SOURCE2} \
-	%{buildroot}%{_datadir}/appdata/%{fontname}.metainfo.xml
+%check
+%fontcheck -a
 
-install -Dm 0644 -p %{SOURCE4} \
-        %{buildroot}%{_datadir}/appdata/%{fontname}-mono.metainfo.xml
-
-%_font_pkg -f %{fontconf} overpass-bold*.otf overpass-extra*.otf overpass-heavy*.otf overpass-italic*.otf overpass-light*.otf overpass-regular*.otf overpass-semibold*.otf overpass-thin*.otf
-%doc README.md overpass-specimen.pdf
-%license LICENSE.md
-%{_datadir}/appdata/%{fontname}.metainfo.xml
+%fontfiles -z 0
 %if 0
 /usr/lib/node_modules/overpass/
 %endif
 
-%_font_pkg -n overpass-mono -f %{monofontconf} overpass-mono-*.otf
-%doc README.md overpass-mono-specimen.pdf
-%license LICENSE.md
-%{_datadir}/appdata/%{fontname}-mono.metainfo.xml
+%fontfiles -z 1
 
 %changelog
-* Fri Oct 15 2021 Pawel Winogrodzki <pawelwi@microsoft.com> - 3.0.4-4
-- Initial CBL-Mariner import from Fedora 32 (license: MIT).
+* Thu Jul 18 2024 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.4-14
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
+
+* Thu Jan 25 2024 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.4-13
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Sun Jan 21 2024 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.4-12
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.4-11
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Thu Jan 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.4-10
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
+* Sat Sep 03 2022 Parag Nemade <pnemade AT redhat DOT com> - 3.0.4-9
+- Convert spec to new fonts packaging guidelines
+
+* Fri Jul 22 2022 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.4-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.4-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
+* Thu Jul 22 2021 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.4-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
+* Tue Jan 26 2021 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.4-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
+
+* Tue Jul 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.4-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
 
 * Wed Jan 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.0.4-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild

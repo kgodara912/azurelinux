@@ -1,17 +1,15 @@
-Summary:        A C++ application logging library
 Name:           glog
 Version:        0.3.5
-Release:        16%{?dist}
+Release:        21%{?dist}
+Summary:        A C++ application logging library
 License:        BSD
-Vendor:         Microsoft Corporation
-Distribution:   Azure Linux
 URL:            https://github.com/google/glog
 Source0:        https://github.com/google/%{name}/archive/v%{version}/%{name}-%{version}.tar.gz
-BuildRequires:  autoconf
-BuildRequires:  gcc
+
 BuildRequires:  gcc-c++
-BuildRequires:  gflags-devel >= 2.1.0
-BuildRequires:  make
+BuildRequires:  gcc
+BuildRequires:  autoconf, gflags-devel >= 2.1.0
+BuildRequires: make
 Requires:       gflags
 Requires:       gflags-devel >= 2.1.0
 
@@ -19,6 +17,7 @@ Requires:       gflags-devel >= 2.1.0
 Google glog is a library that implements application-level
 logging. This library provides logging APIs based on C++-style
 streams and various helper macros.
+
 
 %package        devel
 Summary:        Development files for %{name}
@@ -28,25 +27,25 @@ Requires:       %{name} = %{version}-%{release}
 The %{name}-devel package contains libraries and header files for
 developing applications that use %{name}.
 
+
 %prep
 %autosetup
 
 %build
-export CXXFLAGS="-std=c++14 %{optflags}"
+export CXXFLAGS="-std=c++14 $RPM_OPT_FLAGS"
 autoconf
 %configure --disable-static
 %make_build
 
 %install
 %make_install
-find %{buildroot} -type f -name "*.la" -delete -print
-rm -rf %{buildroot}/%{_docdir}/%{name}-%{version}
+find $RPM_BUILD_ROOT -name '*.la' -exec rm -f {} ';'
+rm -rf $RPM_BUILD_ROOT/%{_docdir}/%{name}-%{version}
 
 %ldconfig_scriptlets
 
 %files
-%license COPYING
-%doc ChangeLog README
+%doc ChangeLog COPYING README
 %{_libdir}/libglog.so.*
 
 %files devel
@@ -56,10 +55,25 @@ rm -rf %{buildroot}/%{_docdir}/%{name}-%{version}
 %dir %{_includedir}/glog
 %{_includedir}/glog/*
 
+
 %changelog
-* Wed Nov 02 2022 Suresh Thelkar <sthelkar@microsoft.com> - 0.3.5-16
-- Initial CBL-Mariner import from Fedora 36 (license: MIT)
-- License verified
+* Thu Jul 18 2024 Fedora Release Engineering <releng@fedoraproject.org> - 0.3.5-21
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
+
+* Wed Jan 24 2024 Fedora Release Engineering <releng@fedoraproject.org> - 0.3.5-20
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Fri Jan 19 2024 Fedora Release Engineering <releng@fedoraproject.org> - 0.3.5-19
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Wed Jul 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 0.3.5-18
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Thu Jan 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 0.3.5-17
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
+* Thu Jul 21 2022 Fedora Release Engineering <releng@fedoraproject.org> - 0.3.5-16
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
 
 * Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 0.3.5-15
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
