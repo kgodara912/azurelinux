@@ -1,7 +1,7 @@
 Summary:        Libxml2
 Name:           libxml2
 Version:        2.11.5
-Release:        8%{?dist}
+Release:        9%{?dist}
 License:        MIT
 Vendor:         Microsoft Corporation
 Distribution:   Azure Linux
@@ -22,6 +22,7 @@ Patch10:        CVE-2025-6170.patch
 Patch11:        CVE-2025-49794_CVE-2025-49796.patch
 Patch12:        CVE-2025-49795.patch
 Patch13:        CVE-2025-7425.patch
+Patch14:        CVE-2025-8732.patch
 
 BuildRequires:  python3-devel
 BuildRequires:  python3-xml
@@ -93,6 +94,10 @@ find %{buildroot} -type f -name "*.la" -delete -print
 %{_libdir}/cmake/libxml2/libxml2-config.cmake
 
 %changelog
+* Tue Feb 18 2026 Kshitiz Godara <kgodara@microsoft.com> - 2.11.5-9
+- Backport upstream MR !337 to fix CVE-2025-8732
+- Prevent infinite recursion in SGML/XML catalog parsing
+
 * Mon Jan 12 2026 Akhila Guruju <v-guakhila@microsoft.com> - 2.11.5-8
 - Patch CVE-2025-7525
 
